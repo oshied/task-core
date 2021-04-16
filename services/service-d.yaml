@@ -1,0 +1,32 @@
+id: service-d
+type: service
+version: 1.0.0
+requires:
+  - service-b
+  - service-c
+tasks:
+  - id: setup
+    action: init
+    provides:
+      - service-d.init
+    jobs:
+      - echo: "service d start"
+
+  - id: run
+    action: run
+    provides:
+      - service-d.run
+    requires:
+      - service-d.init
+      - service-b.run
+    jobs:
+      - echo: "service d run"
+
+  - id: finalize
+    action: finalize
+    provides:
+      - service-d.finalize
+    requires:
+      - service-d.run
+    jobs:
+      - echo: "service d done"

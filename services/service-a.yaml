@@ -1,0 +1,29 @@
+id: service-a
+type: service
+version: 1.0.0
+requires: []
+tasks:
+  - id: setup
+    action: init
+    provides:
+      - service-a.init
+    jobs:
+      - echo: "service a start"
+
+  - id: run
+    action: run
+    provides:
+      - service-a.run
+    requires:
+      - service-a.init
+    jobs:
+      - echo: "service a run"
+
+  - id: finalize
+    action: finalize
+    provides:
+      - service-a.finalize
+    requires:
+      - service-a.run
+    jobs:
+      - echo: "service a done"

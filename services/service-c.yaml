@@ -1,0 +1,30 @@
+id: service-c
+type: service
+version: 1.0.0
+requires:
+  - service-a
+tasks:
+  - id: setup
+    action: init
+    provides:
+      - service-c.init
+    jobs:
+      - echo: "service c start"
+
+  - id: run
+    action: run
+    provides:
+      - service-c.run
+    requires:
+      - service-c.init
+    jobs:
+      - echo: "service c run"
+
+  - id: finalize
+    action: finalize
+    provides:
+      - service-c.finalize
+    requires:
+      - service-c.run
+    jobs:
+      - echo: "service c done"
