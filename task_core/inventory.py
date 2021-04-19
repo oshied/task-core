@@ -6,6 +6,7 @@ from task_core.base import BaseFileData
 
 class Inventory(BaseFileData):
     """service representation"""
+
     @property
     def hosts(self) -> dict:
         return self._data.get("hosts", {})
@@ -18,6 +19,7 @@ class Inventory(BaseFileData):
 
 class Roles(BaseFileData):
     """roles definition"""
+
     def __init__(self, definition):
         self._roles = {}
         super().__init__(definition)

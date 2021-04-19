@@ -5,6 +5,7 @@ import yaml
 
 class BaseFileData:
     """base object from file"""
+
     def __init__(self, definition):
         self._data = None
         with open(definition) as fin:
@@ -16,4 +17,4 @@ class BaseFileData:
 
     @property
     def name(self) -> str:
-        return self._data.get('id', self._data.get('name'))
+        return self._data.get("id", self._data.get("name"))

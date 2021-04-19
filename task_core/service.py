@@ -2,7 +2,6 @@
 """service and task objects"""
 import logging
 import yaml
-from taskflow import task
 from task_core.base import BaseFileData
 from task_core.tasks import ServiceTask
 

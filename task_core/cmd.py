@@ -6,10 +6,11 @@ import logging
 import os
 import pprint
 import sys
-import task_core.exceptions as ex
 
 from taskflow import engines
 from taskflow.patterns import graph_flow as gf
+
+import task_core.exceptions as ex
 from task_core.inventory import Inventory
 from task_core.inventory import Roles
 from task_core.service import Service
@@ -24,10 +25,9 @@ LOG = logging.getLogger(__name__)
 
 class Cli:
     """task-core cli"""
+
     def __init__(self):
-        self._parser = argparse.ArgumentParser(
-            description=""
-        )
+        self._parser = argparse.ArgumentParser(description="")
 
     @property
     def parser(self):
@@ -35,40 +35,45 @@ class Cli:
 
     def parse_args(self):
         self.parser.add_argument(
-            "-s", "--services-dir",
+            "-s",
+            "--services-dir",
             required=True,
             help=("Path to a directory containing service definitions"),
         )
         self.parser.add_argument(
-            "-i", "--inventory-file",
+            "-i",
+            "--inventory-file",
             required=True,
             help=("Path to an inventory file containing hosts to role mappings"),
         )
         self.parser.add_argument(
-            "-r", "--roles-file",
+            "-r",
+            "--roles-file",
             required=True,
             help=("Path to a roles file containing roles to service mappings"),
         )
         self.parser.add_argument(
-            "-t", "--task-type",
-            default='ServiceTask',
-            choices=['ServiceTask', 'DirectorServiceTask'],
+            "-t",
+            "--task-type",
+            default="ServiceTask",
+            choices=["ServiceTask", "DirectorServiceTask"],
             help=("Task type to use when running"),
         )
         self.parser.add_argument(
-            "-d", "--debug",
+            "-d",
+            "--debug",
             action="store_true",
             default=False,
-            help=("Enable debug logging")
+            help=("Enable debug logging"),
         )
         args = self.parser.parse_args()
         return args
 
 
-def get_task_type(task_type='ServiceTask'):
-    if task_type == 'ServiceTask':
+def get_task_type(task_type="ServiceTask"):
+    if task_type == "ServiceTask":
         return task_core.tasks.ServiceTask
-    elif task_type == 'DirectorServiceTask':
+    if task_type == "DirectorServiceTask":
         return task_core.tasks.DirectorServiceTask
     raise Exception(f"Invalid task type {task_type}")
 
