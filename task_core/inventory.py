@@ -1,24 +1,10 @@
 #!/usr/bin/env python3
 """inventory and role objects"""
-import logging
-import yaml
+from task_core.base import BaseFileData
 
 
-LOG = logging.getLogger(__name__)
-
-
-class Inventory:
+class Inventory(BaseFileData):
     """service representation"""
-
-    def __init__(self, definition):
-        self._data = None
-        with open(definition) as fin:
-            self._data = yaml.safe_load(fin.read())
-
-    @property
-    def data(self) -> dict:
-        return self._data
-
     @property
     def hosts(self) -> dict:
         return self._data.get("hosts", {})
@@ -29,20 +15,13 @@ class Inventory:
         return [x for x in self.hosts if role in self.hosts[x].get("role", None)]
 
 
-class Roles:
+class Roles(BaseFileData):
     """roles definition"""
-
     def __init__(self, definition):
         self._roles = {}
-        with open(definition) as fin:
-            self._data = yaml.safe_load(fin.read())
-
+        super().__init__(definition)
         for role in self.data.keys():
             self._roles[role] = Role(role, self.data.get(role).get("services", []))
-
-    @property
-    def data(self) -> dict:
-        return self._data
 
     @property
     def roles(self) -> dict:
@@ -54,6 +33,7 @@ class Roles:
 
 class Role:
     """role definition"""
+
     def __init__(self, name, services):
         self._name = name
         self._services = services

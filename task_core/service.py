@@ -5,69 +5,10 @@ import random
 import time
 import yaml
 from taskflow import task
+from task_core.base import BaseFileData
 
 
 LOG = logging.getLogger(__name__)
-
-
-class Service:
-    """service representation"""
-
-    def __init__(self, definition):
-        self._data = None
-        self._tasks = None
-        self._hosts = []
-        with open(definition) as fin:
-            self._data = yaml.safe_load(fin.read())
-
-    @property
-    def data(self) -> dict:
-        return self._data
-
-    @property
-    def hosts(self) -> list:
-        return self._hosts
-
-    def add_host(self, host) -> list:
-        self._hosts.append(host)
-        return self.hosts
-
-    def remove_host(self, host) -> list:
-        self._hosts.remove(host)
-        return self.hosts
-
-    @property
-    def name(self) -> str:
-        return self._data.get("id")
-
-    @property
-    def type(self) -> str:
-        return self._data.get("type", "service")
-
-    @property
-    def version(self) -> str:
-        return self._data.get("version")
-
-    @property
-    def provides(self):
-        return self.name
-
-    @property
-    def requires(self) -> list:
-        return self._data.get("requires", [])
-
-    @property
-    def tasks(self) -> list:
-        if not self._tasks:
-            task_data = self._data.get("tasks", [])
-            self._tasks = []
-            for _task in task_data:
-                self._tasks.append(ServiceTask(self.name, _task, self._hosts))
-        return self._tasks
-
-    def save(self, location) -> None:
-        with open(location, "w") as fout:
-            yaml.dump(self.data, fout)
 
 
 class ServiceTask(task.Task):
@@ -107,7 +48,7 @@ class ServiceTask(task.Task):
     def jobs(self) -> list:
         return self._data.get("jobs", [])
 
-    def execute(self, *args, **kwargs) -> bool:
+    def execute(self, *args, **kwargs) -> list:
         LOG.info(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
@@ -125,3 +66,62 @@ class ServiceTask(task.Task):
         # note: this return time needs to match the "provides" format type.
         # generally a list or dict
         return [True]
+
+
+class DirectorServiceTask(ServiceTask):
+    """service task posing to director"""
+
+    def execute(self, *args, **kwargs) -> list:
+        pass
+
+
+class Service(BaseFileData):
+    """service representation"""
+
+    def __init__(self, definition):
+        self._data = None
+        self._tasks = None
+        self._hosts = []
+        super().__init__(definition)
+
+    @property
+    def hosts(self) -> list:
+        return self._hosts
+
+    def add_host(self, host) -> list:
+        self._hosts.append(host)
+        return self.hosts
+
+    def remove_host(self, host) -> list:
+        self._hosts.remove(host)
+        return self.hosts
+
+    @property
+    def type(self) -> str:
+        return self._data.get("type", "service")
+
+    @property
+    def version(self) -> str:
+        return self._data.get("version")
+
+    @property
+    def provides(self):
+        return self.name
+
+    @property
+    def requires(self) -> list:
+        return self._data.get("requires", [])
+
+    @property
+    def tasks(self) -> list:
+        return self._data.get("tasks", [])
+
+    def build_tasks(self, task_type=ServiceTask):
+        tasks = []
+        for _task in self.tasks:
+            tasks.append(task_type(self.name, _task, self.hosts))
+        return tasks
+
+    def save(self, location) -> None:
+        with open(location, "w") as fout:
+            yaml.dump(self.data, fout)
