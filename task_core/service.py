@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """service and task objects"""
+import logging
+import random
+import time
 import yaml
 from taskflow import task
+
+
+LOG = logging.getLogger(__name__)
 
 
 class Service:
@@ -60,7 +66,7 @@ class ServiceTask(task.Task):
         name = f"{service}-{data.get('id')}"
         provides = data.get("provides", [])
         requires = data.get("requires", [])
-        print(f"Creating {name}: provides: {provides}, requires: {requires}")
+        LOG.info(f"Creating {name}: provides: {provides}, requires: {requires}")
         super().__init__(name=name, provides=provides, requires=requires)
 
     @property
@@ -84,11 +90,14 @@ class ServiceTask(task.Task):
         return self._data.get("jobs", [])
 
     def execute(self, *args, **kwargs) -> bool:
-        print(f"task execute: {args}, {kwargs}, data; {self.data}")
+        LOG.info(f"task execute: {args}, {kwargs}, data; {self.data}")
         for j in self.jobs:
             if "echo" in j:
-                print(j.get("echo"))
+                LOG.info(j.get("echo"))
+                time.sleep(random.random())
             else:
-                print(f"Unsupported action: {j}")
+                LOG.info(f"Unsupported action: {j}")
                 return [False]
+        # note: this return time needs to match the "provides" format type.
+        # generally a list or dict
         return [True]
