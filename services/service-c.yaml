@@ -1,8 +1,6 @@
 id: service-c
 type: service
 version: 1.0.0
-requires:
-  - service-a
 tasks:
   - id: setup
     action: init

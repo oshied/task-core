@@ -1,7 +1,6 @@
 id: service-b
 type: service
 version: 1.0.0
-requires: []
 tasks:
   - id: setup
     action: init
