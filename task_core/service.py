@@ -16,6 +16,7 @@ class Service:
     def __init__(self, definition):
         self._data = None
         self._tasks = None
+        self._hosts = []
         with open(definition) as fin:
             self._data = yaml.safe_load(fin.read())
 
@@ -24,7 +25,19 @@ class Service:
         return self._data
 
     @property
-    def id(self) -> str:  # pylint: disable=invalid-name
+    def hosts(self) -> list:
+        return self._hosts
+
+    def add_host(self, host) -> list:
+        self._hosts.append(host)
+        return self.hosts
+
+    def remove_host(self, host) -> list:
+        self._hosts.remove(host)
+        return self.hosts
+
+    @property
+    def name(self) -> str:
         return self._data.get("id")
 
     @property
@@ -37,7 +50,7 @@ class Service:
 
     @property
     def provides(self):
-        return self.id
+        return self.name
 
     @property
     def requires(self) -> list:
@@ -49,7 +62,7 @@ class Service:
             task_data = self._data.get("tasks", [])
             self._tasks = []
             for _task in task_data:
-                self._tasks.append(ServiceTask(self.id, _task))
+                self._tasks.append(ServiceTask(self.name, _task, self._hosts))
         return self._tasks
 
     def save(self, location) -> None:
@@ -60,9 +73,10 @@ class Service:
 class ServiceTask(task.Task):
     """task related to a service"""
 
-    def __init__(self, service: str, data: dict):
+    def __init__(self, service: str, data: dict, hosts: list):
         self._service = service
         self._data = data
+        self._hosts = hosts
         name = f"{service}-{data.get('id')}"
         provides = data.get("provides", [])
         requires = data.get("requires", [])
@@ -74,11 +88,15 @@ class ServiceTask(task.Task):
         return self._data
 
     @property
+    def hosts(self) -> list:
+        return self._hosts
+
+    @property
     def service(self) -> str:
         return self._service
 
     @property
-    def id(self) -> str:  # pylint: disable=invalid-name
+    def task_id(self) -> str:
         return self._data.get("id")
 
     @property
@@ -90,7 +108,7 @@ class ServiceTask(task.Task):
         return self._data.get("jobs", [])
 
     def execute(self, *args, **kwargs) -> bool:
-        LOG.info(f"task execute: {args}, {kwargs}, data; {self.data}")
+        LOG.info(f"task execute: {args}, {kwargs}, hosts: {self.hosts}, data; {self.data}")
         for j in self.jobs:
             if "echo" in j:
                 LOG.info(j.get("echo"))

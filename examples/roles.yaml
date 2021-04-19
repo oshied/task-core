@@ -1,0 +1,13 @@
+role-1:
+  services:
+    - service-a
+role-2:
+  services:
+    - service-a
+    - service-b
+    - service-c
+    - service-d
+role-3:
+  services:
+    - service-c
+    - service-d

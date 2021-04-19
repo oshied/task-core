@@ -1,0 +1,11 @@
+hosts:
+  host-a:
+    role: role-1
+  host-b:
+    role: role-1
+  host-c:
+    role: role-2
+  host-d:
+    role: role-2
+  host-e:
+    role: role-3
