@@ -1,0 +1,18 @@
+id: mariadb
+type: service
+version: 1.0.0
+tasks:
+  - id: setup
+    action: run
+    provides:
+      - mariadb.init
+    requires:
+      - repos.init
+    jobs:
+      - ARG: mysql_root_password SuperSecrete
+      - RUN: --stdout-arg director_hostname hostname
+      - RUN: --skip-cache dnf -y install mariadb mariadb-server
+      - RUN: systemctl enable mariadb.service
+      - RUN: systemctl start mariadb.service
+      - RUN: mysql -e "UPDATE mysql.user SET Password = PASSWORD('{{ mysql_root_password }}') WHERE User = 'root'"
+      - RUN: mysql -e "FLUSH PRIVILEGES"

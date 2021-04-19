@@ -1,0 +1,15 @@
+id: repos
+type: service
+version: 1.0.0
+tasks:
+  - id: setup
+    action: run
+    provides:
+      - repos.init
+    jobs:
+      - RUN: --skip-cache dnf install -y lynx
+      - RUN: >-
+          --skip-cache --stdout-arg tripleo_repo_rpm
+          lynx -dump -hiddenlinks=listonly https://trunk.rdoproject.org/centos8/component/tripleo/current/ | awk '/python3-tripleo-repos.*rpm$/ {print $2}'
+      - RUN: --skip-cache dnf install -y {{ tripleo_repo_rpm }}
+      - RUN: --skip-cache tripleo-repos --stream -b master current-tripleo ceph

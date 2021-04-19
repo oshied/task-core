@@ -1,0 +1,10 @@
+basic:
+  services:
+    - chronyd
+    - repos
+keystone:
+  services:
+    - chronyd
+    - repos
+    - mariadb
+    - openstack-keystone

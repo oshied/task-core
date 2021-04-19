@@ -1,0 +1,5 @@
+hosts:
+  host-a:
+    role: keystone
+  host-b:
+    role: basic
