@@ -69,7 +69,10 @@ class ServiceTask(task.Task):
 
 
 class DirectorServiceTask(ServiceTask):
-    """service task posing to director"""
+    """service task posing to director
+
+    https://cloudnull.github.io/director/orchestrations.html#orchestration-library-usage
+    """
 
     def execute(self, *args, **kwargs) -> list:
         pass
