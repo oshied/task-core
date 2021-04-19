@@ -21,25 +21,24 @@ class Inventory:
 
     @property
     def hosts(self) -> dict:
-        return self._data.get('hosts', {})
+        return self._data.get("hosts", {})
 
     def get_role_hosts(self, role=None) -> list:
-        hosts = self.hosts
         if role is None:
-            return [x for x in hosts.keys()]
-        else:
-            return [x for x in hosts if role in hosts[x].get('role', None)]
+            return self.hosts.keys()
+        return [x for x in self.hosts if role in self.hosts[x].get("role", None)]
 
 
 class Roles:
-    """role definition"""
+    """roles definition"""
+
     def __init__(self, definition):
         self._roles = {}
         with open(definition) as fin:
             self._data = yaml.safe_load(fin.read())
 
         for role in self.data.keys():
-            self._roles[role] = Role(role, self.data.get(role).get('services', []))
+            self._roles[role] = Role(role, self.data.get(role).get("services", []))
 
     @property
     def data(self) -> dict:
@@ -54,7 +53,8 @@ class Roles:
 
 
 class Role:
-    def __init__(self, name, services=[]):
+    """role definition"""
+    def __init__(self, name, services):
         self._name = name
         self._services = services
 

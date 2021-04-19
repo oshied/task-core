@@ -12,36 +12,40 @@ from task_core.inventory import Inventory
 from task_core.inventory import Roles
 
 logging.basicConfig(
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    level=logging.INFO)
+    format="%(asctime)s [%(levelname)s] %(message)s", level=logging.INFO
+)
 
 LOG = logging.getLogger(__name__)
 
 
 def main():
     services_dir = os.path.join(sys.prefix, "share", "task-core", "services")
-    LOG.info(f"Loading services from: {services_dir}")
+    LOG.info("Loading services from: %s", services_dir)
     files = glob.glob(os.path.join(services_dir, "**", "*.yaml"), recursive=True)
     services = {}
     for file in files:
         svc = Service(file)
         services[svc.name] = svc
 
-    inventory_file = os.path.join(sys.prefix, "share", "task-core", "examples", "inventory.yaml")
+    inventory_file = os.path.join(
+        sys.prefix, "share", "task-core", "examples", "inventory.yaml"
+    )
     inventory = Inventory(inventory_file)
 
-    roles_file = os.path.join(sys.prefix, "share", "task-core", "examples", "roles.yaml")
+    roles_file = os.path.join(
+        sys.prefix, "share", "task-core", "examples", "roles.yaml"
+    )
     roles = Roles(roles_file)
 
     for host in inventory.hosts.keys():
-        for svc in roles.get_services(inventory.hosts.get(host).get('role')):
-            LOG.info(f"Adding {host} to {svc}")
+        for svc in roles.get_services(inventory.hosts.get(host).get("role")):
+            LOG.info("Adding %s to %s", host, svc)
             services[svc].add_host(host)
 
     flow = gf.Flow("root")
-    for service_id in services.keys():
+    for service_id in services:
         service = services.get(service_id)
-        LOG.info(f"Adding {service.name} tasks...")
+        LOG.info("Adding %s tasks...", service.name)
         service_flow = gf.Flow(service.name)
         for task in service.tasks:
             service_flow.add(task)

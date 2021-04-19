@@ -80,7 +80,7 @@ class ServiceTask(task.Task):
         name = f"{service}-{data.get('id')}"
         provides = data.get("provides", [])
         requires = data.get("requires", [])
-        LOG.info(f"Creating {name}: provides: {provides}, requires: {requires}")
+        LOG.info("Creating %s: provides: %s, requires: %s", name, provides, requires)
         super().__init__(name=name, provides=provides, requires=requires)
 
     @property
@@ -108,13 +108,19 @@ class ServiceTask(task.Task):
         return self._data.get("jobs", [])
 
     def execute(self, *args, **kwargs) -> bool:
-        LOG.info(f"task execute: {args}, {kwargs}, hosts: {self.hosts}, data; {self.data}")
+        LOG.info(
+            "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            args,
+            kwargs,
+            self.hosts,
+            self.data,
+        )
         for j in self.jobs:
             if "echo" in j:
                 LOG.info(j.get("echo"))
                 time.sleep(random.random())
             else:
-                LOG.info(f"Unsupported action: {j}")
+                LOG.info("Unsupported action: %s", j)
                 return [False]
         # note: this return time needs to match the "provides" format type.
         # generally a list or dict
