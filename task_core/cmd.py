@@ -113,17 +113,17 @@ def main():
 def example():
     """task-core-example"""
     services_dir = os.path.join(
-        sys.prefix, "share", "task-core", "examples", "services"
+        sys.prefix, "share", "task-core", "examples", "framework", "services"
     )
     services = load_services(services_dir)
 
     inventory_file = os.path.join(
-        sys.prefix, "share", "task-core", "examples", "inventory.yaml"
+        sys.prefix, "share", "task-core", "examples", "framework", "inventory.yaml"
     )
     inventory = Inventory(inventory_file)
 
     roles_file = os.path.join(
-        sys.prefix, "share", "task-core", "examples", "roles.yaml"
+        sys.prefix, "share", "task-core", "examples", "framework", "roles.yaml"
     )
     roles = Roles(roles_file)
 
