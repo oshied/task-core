@@ -3,6 +3,9 @@
 import logging
 import random
 import time
+
+from director import mixin
+from director import user
 from taskflow import task
 
 
@@ -66,10 +69,22 @@ class ServiceTask(task.Task):
 
 
 class DirectorServiceTask(ServiceTask):
-    """service task posing to director
+    """Service task posting to director.
 
     https://cloudnull.github.io/director/orchestrations.html#orchestration-library-usage
+
+    Execute a set of jobs against a director cluster. Execution returns a
+    byte encoded list of jobs UUID.
+
+    :returns: List
     """
+
+    class DirectorArgs(object):
+        """Arguments required to interface with Director."""
+
+        debug=False
+        socket_path='/var/run/director.sock'
+        mode='orchestrate'
 
     def execute(self, *args, **kwargs) -> list:
         LOG.info(
@@ -79,6 +94,12 @@ class DirectorServiceTask(ServiceTask):
             self.hosts,
             self.data,
         )
-        for j in self.jobs:
-            LOG.info("Director action: %s", j)
-        return [True]
+
+        _mixin = mixin.Mixin(args=self.DirectorArgs)
+
+        return _mixin.exec_orchestartions(
+            user_exec=user.User(args=self.DirectorArgs),
+            orchestrations=self.jobs,
+            defined_targets=self.hosts,
+            raw_return=True,
+        )

@@ -1,3 +1,6 @@
+# Director is currently unpublished, this pulls in director from git sources
+-e git+https://github.com/cloudnull/director#egg=director
+
 pbr!=2.1.0,>=2.0.0
 taskflow
 pyyaml
