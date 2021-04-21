@@ -3,7 +3,7 @@
 import logging
 import yaml
 from task_core.base import BaseFileData
-from task_core.tasks import ServiceTask
+from task_core.tasks import TaskManager
 
 
 LOG = logging.getLogger(__name__)
@@ -16,6 +16,7 @@ class Service(BaseFileData):
         self._data = None
         self._tasks = None
         self._hosts = []
+        self._task_mgr = TaskManager.instance()
         super().__init__(definition)
 
     @property
@@ -50,9 +51,13 @@ class Service(BaseFileData):
     def tasks(self) -> list:
         return self._data.get("tasks", [])
 
-    def build_tasks(self, task_type=ServiceTask):
+    def build_tasks(self, task_type_override=None):
         tasks = []
         for _task in self.tasks:
+            if task_type_override:
+                task_type = task_type_override
+            else:
+                task_type = self._task_mgr.get_driver(_task.get("driver", "service"))
             tasks.append(task_type(self.name, _task, self.hosts))
         return tasks
 

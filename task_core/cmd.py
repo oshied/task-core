@@ -55,7 +55,7 @@ class Cli:
         self.parser.add_argument(
             "-t",
             "--task-type",
-            default="ServiceTask",
+            default=None,
             choices=["ServiceTask", "DirectorServiceTask"],
             help=("Task type to use when running"),
         )
@@ -70,12 +70,12 @@ class Cli:
         return args
 
 
-def get_task_type(task_type="ServiceTask"):
+def get_task_type(task_type=None):
     if task_type == "ServiceTask":
         return task_core.tasks.ServiceTask
     if task_type == "DirectorServiceTask":
         return task_core.tasks.DirectorServiceTask
-    raise Exception(f"Invalid task type {task_type}")
+    return None
 
 
 def load_services(services_dir) -> dict:
@@ -99,12 +99,12 @@ def add_hosts_to_services(inventory, roles, services) -> dict:
     return services
 
 
-def add_services_to_flow(flow, services, task_type) -> gf.Flow:
+def add_services_to_flow(flow, services, task_type_override=None) -> gf.Flow:
     for service_id in services:
         service = services.get(service_id)
         LOG.info("Adding %s tasks...", service.name)
         service_flow = gf.Flow(service.name)
-        for task in service.build_tasks(task_type):
+        for task in service.build_tasks(task_type_override):
             service_flow.add(task)
         flow.add(service_flow)
     return flow
@@ -128,10 +128,11 @@ def main():
     add_hosts_to_services(inventory, roles, services)
 
     flow = gf.Flow("root")
-    add_services_to_flow(flow, services, get_task_type(args.task_type))
+    add_services_to_flow(flow, services)
 
     LOG.info("Running...")
     result = engines.run(flow, engine="parallel")
+    LOG.info("Done...")
     pprint.pprint(result)
 
 
@@ -155,7 +156,7 @@ def example():
     add_hosts_to_services(inventory, roles, services)
 
     flow = gf.Flow("root")
-    add_services_to_flow(flow, services, get_task_type())
+    add_services_to_flow(flow, services)
 
     LOG.info("Running...")
     result = engines.run(flow, engine="parallel")

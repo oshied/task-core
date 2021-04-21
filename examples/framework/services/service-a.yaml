@@ -2,6 +2,10 @@ id: service-a
 type: service
 version: 1.0.0
 tasks:
+  - id: print
+    driver: print
+    message: "message from service a"
+
   - id: setup
     action: init
     provides:
@@ -26,3 +30,4 @@ tasks:
       - service-a.run
     jobs:
       - echo: "service a done"
+

@@ -18,6 +18,12 @@ tasks:
     jobs:
       - echo: "service c run"
 
+  - id: print
+    driver: print
+    requires:
+      - service-c.run
+    message: "service c ran...."
+
   - id: finalize
     action: finalize
     provides:

@@ -2,6 +2,7 @@
 """service and task objects"""
 import logging
 import random
+from stevedore import driver
 import time
 
 from director import mixin
@@ -10,6 +11,31 @@ from taskflow import task
 
 
 LOG = logging.getLogger(__name__)
+
+
+class TaskManager:
+    """task type loader"""
+
+    _instance = None
+    _types = {}
+
+    def __init__(self):
+        raise RuntimeError("Use instance()")
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            cls._instance = cls.__new__(cls)
+        return cls._instance
+
+    def get_driver(self, name) -> task.Task:
+        if name not in self._types:
+            self._types[name] = driver.DriverManager(
+                "task_core.task.types", name=name, invoke_on_load=False
+            )
+            if name not in self._types:
+                raise Exception(f"'{name}' task type unknown")
+        return self._types[name].driver
 
 
 class ServiceTask(task.Task):
@@ -50,7 +76,7 @@ class ServiceTask(task.Task):
         return self._data.get("jobs", [])
 
     def execute(self, *args, **kwargs) -> list:
-        LOG.info(
+        LOG.debug(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
             kwargs,
@@ -82,12 +108,12 @@ class DirectorServiceTask(ServiceTask):
     class DirectorArgs(object):
         """Arguments required to interface with Director."""
 
-        debug=False
-        socket_path='/var/run/director.sock'
-        mode='orchestrate'
+        debug = False
+        socket_path = "/var/run/director.sock"
+        mode = "orchestrate"
 
     def execute(self, *args, **kwargs) -> list:
-        LOG.info(
+        LOG.debug(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
             kwargs,
@@ -103,3 +129,22 @@ class DirectorServiceTask(ServiceTask):
             defined_targets=self.hosts,
             raw_return=True,
         )
+
+
+class PrintTask(ServiceTask):
+    """Task that just prints itself out"""
+
+    @property
+    def message(self):
+        return self.data.get("message")
+
+    def execute(self, *args, **kwargs) -> list:
+        LOG.debug(
+            "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            args,
+            kwargs,
+            self.hosts,
+            self.data,
+        )
+        LOG.info("PRINT: %s", self.message)
+        return [True]
