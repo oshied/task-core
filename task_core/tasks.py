@@ -36,6 +36,23 @@ class TaskManager:
         return self._types[name].driver
 
 
+class TaskResult:
+    """task result object"""
+    def __init__(self, status: bool, data: dict):
+        self._status = status
+        self._data = data
+
+    @property
+    def status(self) -> bool:
+        """task result status"""
+        return self._status
+
+    @property
+    def data(self) -> dict:
+        """rturn data info"""
+        return self._data
+
+
 class ServiceTask(task.Task):
     """task related to a service"""
 
@@ -73,7 +90,7 @@ class ServiceTask(task.Task):
     def jobs(self) -> list:
         return self._data.get("jobs", [])
 
-    def execute(self, *args, **kwargs) -> list:
+    def execute(self, *args, **kwargs) -> list[TaskResult]:
         LOG.debug(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
@@ -89,7 +106,7 @@ class ServiceTask(task.Task):
                 LOG.info("Unknown action: %s", j)
         # note: this return time needs to match the "provides" format type.
         # generally a list or dict
-        return [True]
+        return [TaskResult(True, {})]
 
 
 class DirectorServiceTask(ServiceTask):
@@ -110,7 +127,7 @@ class DirectorServiceTask(ServiceTask):
         socket_path = "/var/run/director.sock"
         mode = "orchestrate"
 
-    def execute(self, *args, **kwargs) -> list:
+    def execute(self, *args, **kwargs) -> list[TaskResult]:
         LOG.debug(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
@@ -137,7 +154,7 @@ class DirectorServiceTask(ServiceTask):
                 # TODO(mwhahaha): handle failures
                 LOG.error(info)
                 success = False
-        return success
+        return [TaskResult(success, {})]
 
 
 class PrintTask(ServiceTask):
@@ -147,7 +164,7 @@ class PrintTask(ServiceTask):
     def message(self):
         return self.data.get("message")
 
-    def execute(self, *args, **kwargs) -> list:
+    def execute(self, *args, **kwargs) -> list[TaskResult]:
         LOG.debug(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
@@ -156,4 +173,4 @@ class PrintTask(ServiceTask):
             self.data,
         )
         LOG.info("PRINT: %s", self.message)
-        return [True]
+        return [TaskResult(True, {})]

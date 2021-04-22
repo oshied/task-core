@@ -77,14 +77,16 @@ class TestServiceTask(unittest.TestCase):
     def test_execute(self, mock_sleep):
         """test execute"""
         obj = tasks.ServiceTask("foo", self.data, ["host-a", "host-b"])
-        self.assertTrue(obj.execute())
+        result = obj.execute()
+        self.assertTrue(result[0].status)
 
     @mock.patch("time.sleep")
     def test_execute_bad_job(self, mock_sleep):
         """test execute with bad job definition"""
         self.data["jobs"] = [{"bad": "job"}]
         obj = tasks.ServiceTask("foo", self.data, ["host-a", "host-b"])
-        self.assertTrue(obj.execute())
+        result = obj.execute()
+        self.assertTrue(result[0].status)
 
 
 class TestDirectorServiceTask(unittest.TestCase):
@@ -108,7 +110,8 @@ class TestDirectorServiceTask(unittest.TestCase):
     def test_execute(self, mock_mixin):
         """test execute"""
         obj = tasks.DirectorServiceTask("foo", self.data, ["host-a", "host-b"])
-        self.assertTrue(obj.execute())
+        result = obj.execute()
+        self.assertTrue(result[0].status)
 
     @mock.patch("director.mixin.Mixin")
     def test_execute_fail(self, mock_mixin):
@@ -118,7 +121,8 @@ class TestDirectorServiceTask(unittest.TestCase):
         mixin_obj.exec_orchestrations.return_value = [b"foo"]
         mixin_obj.poll_job.return_value = (False, "meh")
         obj = tasks.DirectorServiceTask("foo", self.data, ["host-a", "host-b"])
-        self.assertFalse(obj.execute())
+        result = obj.execute()
+        self.assertFalse(result[0].status)
         mixin_obj.exec_orchestrations.assert_called_once_with(
             user_exec=mock.ANY,
             orchestrations=self.data.get("jobs"),
@@ -149,4 +153,6 @@ class TestPrintTask(unittest.TestCase):
     def test_execute(self):
         """test execute"""
         obj = tasks.PrintTask("foo", self.data, ["host-a", "host-b"])
-        self.assertTrue(obj.execute())
+        result = obj.execute()
+        self.assertTrue(result[0].status)
+        self.assertEqual(result[0].data, {})
