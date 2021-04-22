@@ -33,8 +33,6 @@ class TaskManager:
             self._types[name] = driver.DriverManager(
                 "task_core.task.types", name=name, invoke_on_load=False
             )
-            if name not in self._types:
-                raise Exception(f"'{name}' task type unknown")
         return self._types[name].driver
 
 
@@ -129,6 +127,8 @@ class DirectorServiceTask(ServiceTask):
             defined_targets=self.hosts,
             raw_return=True,
         )
+
+        LOG.error(jobs)
 
         success = True
         for item in [i.decode() for i in jobs]:
