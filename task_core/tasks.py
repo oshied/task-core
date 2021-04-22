@@ -2,8 +2,8 @@
 """service and task objects"""
 import logging
 import random
-from stevedore import driver
 import time
+from stevedore import driver
 
 from director import mixin
 from director import user
@@ -105,7 +105,7 @@ class DirectorServiceTask(ServiceTask):
     :returns: List
     """
 
-    class DirectorArgs(object):
+    class DirectorArgs:  # pylint: disable=too-few-public-methods
         """Arguments required to interface with Director."""
 
         debug = False
