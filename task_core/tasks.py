@@ -123,12 +123,21 @@ class DirectorServiceTask(ServiceTask):
 
         _mixin = mixin.Mixin(args=self.DirectorArgs)
 
-        return _mixin.exec_orchestartions(
+        jobs = _mixin.exec_orchestrations(
             user_exec=user.User(args=self.DirectorArgs),
             orchestrations=self.jobs,
             defined_targets=self.hosts,
             raw_return=True,
         )
+
+        success = True
+        for item in [i.decode() for i in jobs]:
+            status, info = _mixin.poll_job(job_id=item)
+            if not status:
+                # TODO(mwhahaha): handle failures
+                LOG.error(info)
+                success = False
+        return success
 
 
 class PrintTask(ServiceTask):
