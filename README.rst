@@ -52,7 +52,7 @@ the bash script.
       ssh-copy-id 192.168.24.$H
     done
 
-    cat > ~/catalog <<EOF
+    cat > ~/catalog.yaml <<EOF
     directord_server:
       targets:
       - host: 192.168.24.2
@@ -69,11 +69,7 @@ the bash script.
       - host: 192.168.24.5
     EOF
 
-    pushd directord
-    # needed to get the share files in place
-    pip install .
-    directord bootstrap --catalog $HOME/catalog --catalog tools/directord-bootstrap-catalog.yaml
-    popd
+    directord bootstrap --catalog $HOME/catalog.yaml --catalog ~/test-venv/share/directord/tools/directord-bootstrap-catalog.yaml
 
     sudo chmod a+w /var/run/directord.sock
 
