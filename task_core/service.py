@@ -2,8 +2,8 @@
 """service and task objects"""
 import logging
 import yaml
-from task_core.base import BaseFileData
-from task_core.tasks import TaskManager
+from .base import BaseFileData
+from .tasks import TaskManager
 
 
 LOG = logging.getLogger(__name__)

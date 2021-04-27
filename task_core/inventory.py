@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """inventory and role objects"""
-import task_core.exceptions as ex
-from task_core.base import BaseFileData
+from .exceptions import InvalidRole
+from .base import BaseFileData
 
 
 class Inventory(BaseFileData):
@@ -32,7 +32,7 @@ class Roles(BaseFileData):
 
     def get_services(self, role) -> list:
         if role not in self.roles:
-            raise ex.InvalidRole(f"Role '{role}' is not defined in the roles file")
+            raise InvalidRole(f"Role '{role}' is not defined in the roles file")
         return self.roles.get(role).services
 
 

@@ -20,4 +20,4 @@ Example invocation (from folder)
   task-core --services-dir examples/director/services \
             --inventory-file examples/director/inventory.yaml \
             --roles-file examples/director/roles.yaml \
-            --task-type DirectorServiceTask
+            --debug

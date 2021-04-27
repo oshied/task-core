@@ -10,11 +10,10 @@ import sys
 from taskflow import engines
 from taskflow.patterns import graph_flow as gf
 
-import task_core.exceptions as ex
-from task_core.inventory import Inventory
-from task_core.inventory import Roles
-from task_core.service import Service
-import task_core.tasks
+from .exceptions import InvalidService
+from .inventory import Inventory
+from .inventory import Roles
+from .service import Service
 
 LOG = logging.getLogger(__name__)
 
@@ -49,13 +48,6 @@ class Cli:
             help=("Path to a roles file containing roles to service mappings"),
         )
         self.parser.add_argument(
-            "-t",
-            "--task-type",
-            default=None,
-            choices=["ServiceTask", "DirectorServiceTask"],
-            help=("Task type to use when running"),
-        )
-        self.parser.add_argument(
             "-d",
             "--debug",
             action="store_true",
@@ -64,14 +56,6 @@ class Cli:
         )
         args = self.parser.parse_args()
         return args
-
-
-def get_task_type(task_type=None):
-    if task_type == "ServiceTask":
-        return task_core.tasks.ServiceTask
-    if task_type == "DirectorServiceTask":
-        return task_core.tasks.DirectorServiceTask
-    return None
 
 
 def load_services(services_dir) -> dict:
@@ -91,16 +75,16 @@ def add_hosts_to_services(inventory, roles, services) -> dict:
             try:
                 services[svc].add_host(host)
             except KeyError as e:
-                raise ex.InvalidService(f"Service '{svc}' is not defined") from e
+                raise InvalidService(f"Service '{svc}' is not defined") from e
     return services
 
 
-def add_services_to_flow(flow, services, task_type_override=None) -> gf.Flow:
+def add_services_to_flow(flow, services) -> gf.Flow:
     for service_id in services:
         service = services.get(service_id)
         LOG.info("Adding %s tasks...", service.name)
         service_flow = gf.Flow(service.name)
-        for task in service.build_tasks(task_type_override):
+        for task in service.build_tasks():
             service_flow.add(task)
         flow.add(service_flow)
     return flow

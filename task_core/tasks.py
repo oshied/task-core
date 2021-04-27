@@ -4,13 +4,13 @@ import logging
 import os
 import random
 import time
+
 import ansible_runner
 from stevedore import driver
-
 from director import mixin
 from director import user
-from .base import BaseTask
 
+from .base import BaseTask
 
 LOG = logging.getLogger(__name__)
 
