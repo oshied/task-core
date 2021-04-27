@@ -8,3 +8,7 @@ class InvalidRole(Exception):
 
 class InvalidService(Exception):
     """Exception if service is not defined"""
+
+
+class ExecutionFailed(Exception):
+    """Exception for execute failures"""

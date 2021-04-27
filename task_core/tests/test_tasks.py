@@ -4,6 +4,7 @@ import unittest
 import yaml
 from unittest import mock
 from task_core import tasks
+from task_core.exceptions import ExecutionFailed
 
 
 DUMMY_PRINT_TASK_DATA = """
@@ -60,7 +61,7 @@ class TestTaskManager(unittest.TestCase):
         """test stevedore driver"""
         obj = tasks.TaskManager.instance()
         self.assertTrue(obj.get_driver("service"), tasks.ServiceTask)
-        self.assertTrue(obj.get_driver("director_service"), tasks.DirectorServiceTask)
+        self.assertTrue(obj.get_driver("director"), tasks.DirectorTask)
         self.assertTrue(obj.get_driver("print"), tasks.PrintTask)
         self.assertRaises(stevedore.exception.NoMatches, obj.get_driver, "doesnotexist")
 
@@ -99,8 +100,8 @@ class TestServiceTask(unittest.TestCase):
         self.assertTrue(result[0].status)
 
 
-class TestDirectorServiceTask(unittest.TestCase):
-    """test DirectorServiceTask"""
+class TestDirectorTask(unittest.TestCase):
+    """test DirectorTask"""
 
     def setUp(self):
         super().setUp()
@@ -108,7 +109,7 @@ class TestDirectorServiceTask(unittest.TestCase):
 
     def test_object(self):
         """test basic object"""
-        obj = tasks.DirectorServiceTask("foo", self.data, ["host-a", "host-b"])
+        obj = tasks.DirectorTask("foo", self.data, ["host-a", "host-b"])
         self.assertEqual(obj.data, self.data)
         self.assertEqual(obj.hosts, ["host-a", "host-b"])
         self.assertEqual(obj.service, "foo")
@@ -119,27 +120,29 @@ class TestDirectorServiceTask(unittest.TestCase):
     @mock.patch("director.mixin.Mixin")
     def test_execute(self, mock_mixin):
         """test execute"""
-        obj = tasks.DirectorServiceTask("foo", self.data, ["host-a", "host-b"])
+        obj = tasks.DirectorTask("foo", self.data, ["host-a", "host-b"])
         result = obj.execute()
         self.assertTrue(result[0].status)
 
+    @mock.patch("director.user.Manage")
     @mock.patch("director.mixin.Mixin")
-    def test_execute_fail(self, mock_mixin):
+    def test_execute_fail(self, mock_mixin, mock_manage):
         """test execute"""
         mixin_obj = mock.MagicMock()
+        manage_obj = mock.MagicMock()
         mock_mixin.return_value = mixin_obj
+        mock_manage.return_value = manage_obj
         mixin_obj.exec_orchestrations.return_value = [b"foo"]
-        mixin_obj.poll_job.return_value = (False, "meh")
-        obj = tasks.DirectorServiceTask("foo", self.data, ["host-a", "host-b"])
-        result = obj.execute()
-        self.assertFalse(result[0].status)
+        manage_obj.poll_job.return_value = (False, "meh")
+        obj = tasks.DirectorTask("foo", self.data, ["host-a", "host-b"])
+        self.assertRaises(ExecutionFailed, obj.execute)
         mixin_obj.exec_orchestrations.assert_called_once_with(
-            user_exec=mock.ANY,
+            user_exec=manage_obj,
             orchestrations=self.data.get("jobs"),
             defined_targets=["host-a", "host-b"],
             return_raw=True,
         )
-        mixin_obj.poll_job.assert_called_once_with(job_id="foo")
+        manage_obj.poll_job.assert_called_once_with(job_id="foo")
 
 
 class TestPrintTask(unittest.TestCase):

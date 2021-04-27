@@ -4,12 +4,12 @@ version: 1.0.0
 tasks:
   - id: setup
     action: run
+    driver: director
     provides:
       - repos.init
     jobs:
-      - RUN: --skip-cache dnf install -y lynx
       - RUN: >-
           --skip-cache --stdout-arg tripleo_repo_rpm
-          lynx -dump -hiddenlinks=listonly https://trunk.rdoproject.org/centos8/component/tripleo/current/ | awk '/python3-tripleo-repos.*rpm$/ {print $2}'
-      - RUN: --skip-cache dnf install -y {{ tripleo_repo_rpm }}
+        curl -s https://trunk.rdoproject.org/centos8/component/tripleo/current/ | egrep -o '"python3-tripleo-repos.*rpm"' | tr -d "\""
+      - RUN: --skip-cache dnf install -y https://trunk.rdoproject.org/centos8/component/tripleo/current/{{ tripleo_repo_rpm }}
       - RUN: --skip-cache tripleo-repos --stream -b master current-tripleo ceph

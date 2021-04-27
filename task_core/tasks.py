@@ -11,6 +11,7 @@ from director import mixin
 from director import user
 
 from .base import BaseTask
+from .exceptions import ExecutionFailed
 
 LOG = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ class ServiceTask(BaseTask):
         return [TaskResult(True, {})]
 
 
-class DirectorServiceTask(ServiceTask):
+class DirectorTask(ServiceTask):
     """Service task posting to director.
 
     https://cloudnull.github.io/director/orchestrations.html#orchestration-library-usage
@@ -113,23 +114,31 @@ class DirectorServiceTask(ServiceTask):
         )
 
         _mixin = mixin.Mixin(args=self.DirectorArgs)
+        _user = user.Manage(args=self.DirectorArgs)
 
-        jobs = _mixin.exec_orchestrations(
-            user_exec=user.User(args=self.DirectorArgs),
-            orchestrations=self.jobs,
-            defined_targets=self.hosts,
-            return_raw=True,
-        )
+        try:
+            jobs = _mixin.exec_orchestrations(
+                user_exec=_user,
+                orchestrations=self.jobs,
+                defined_targets=self.hosts,
+                return_raw=True,
+            )
+        except Exception as e:
+            LOG.error("Exception while executing orcestrations, %s", e)
+            raise
 
-        LOG.error(jobs)
+        LOG.debug(jobs)
 
         success = True
         for item in [i.decode() for i in jobs]:
-            status, info = _mixin.poll_job(job_id=item)
+            LOG.debug("Waiting for job... %s", item)
+            status, info = _user.poll_job(job_id=item)
             if not status:
                 # TODO(mwhahaha): handle failures
                 LOG.error(info)
                 success = False
+        if not success:
+            raise ExecutionFailed("Director job execution failed")
         return [TaskResult(success, {})]
 
 

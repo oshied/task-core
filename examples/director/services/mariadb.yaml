@@ -4,6 +4,7 @@ version: 1.0.0
 tasks:
   - id: setup
     action: run
+    driver: director
     provides:
       - mariadb.init
     requires:
