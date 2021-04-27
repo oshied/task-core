@@ -22,10 +22,10 @@ Example invocation (from folder)
             --roles-file examples/directord/roles.yaml \
             --debug
 
-Example director execution
+Example directord execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is an example that uses [https://github.com/cloudnull/director] to setup
+This is an example that uses [https://github.com/cloudnull/directord] to setup
 an instance of keystone. The below bit of code assumes 4 nodes available
 with a stack user that can been connected to via ssh from the user running
 the bash script.
@@ -37,12 +37,9 @@ the bash script.
     virtualenv ~/test-venv
     source ~/test-venv/bin/activate
 
-    git clone https://github.com/cloudnull/directord
     git clone https://github.com/mwhahaha/task-core
 
-    pushd directord
-    pip install .
-    popd
+    pip install directord
 
     pushd task-core
     pip install -r requirements.txt
@@ -72,7 +69,7 @@ the bash script.
       - host: 192.168.24.5
     EOF
 
-    pushd director
+    pushd directord
     # needed to get the share files in place
     pip install .
     directord bootstrap --catalog $HOME/catalog --catalog tools/directord-bootstrap-catalog.yaml
@@ -91,8 +88,8 @@ the bash script.
     EOF
 
     task-core \
-      -s task-core/examples/director/services/ \
+      -s task-core/examples/directord/services/ \
       -i $HOME/inventory.yaml \
-      -r task-core/examples/director/roles.yaml
+      -r task-core/examples/directord/roles.yaml
 
     ssh standalone-1 openstack --os-auth-url http://standalone-1:5000/v3 --os-user-domain-name default --os-username admin --os-password keystone token issue

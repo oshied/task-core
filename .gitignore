@@ -3,3 +3,4 @@
 *.eggs
 *.pyc
 .coverage
+.vscode
