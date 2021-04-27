@@ -111,7 +111,8 @@ def main():
     add_services_to_flow(flow, services)
 
     LOG.info("Running...")
-    result = engines.run(flow, engine="parallel")
+    # NOTE(mwhahaha): director doesn't workw ith parallel, use serial for now
+    result = engines.run(flow, engine="serial")
     LOG.info("Done...")
     pprint.pprint(result)
 
