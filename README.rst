@@ -80,7 +80,7 @@ the bash script.
 
     sudo chmod a+w /var/run/directord.sock
 
-    cat > ~/inventory.yml <<EOF
+    cat > ~/inventory.yaml <<EOF
     hosts:
       standalone-1:
         role: keystone

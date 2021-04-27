@@ -101,7 +101,7 @@ class DirectordTask(ServiceTask):
         """Arguments required to interface with Director."""
 
         debug = False
-        socket_path = "/var/run/director.sock"
+        socket_path = "/var/run/directord.sock"
         mode = "orchestrate"
 
     def execute(self, *args, **kwargs) -> list:
