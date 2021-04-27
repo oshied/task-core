@@ -137,7 +137,7 @@ class TestDirectorServiceTask(unittest.TestCase):
             user_exec=mock.ANY,
             orchestrations=self.data.get("jobs"),
             defined_targets=["host-a", "host-b"],
-            raw_return=True,
+            return_raw=True,
         )
         mixin_obj.poll_job.assert_called_once_with(job_id="foo")
 
@@ -168,6 +168,7 @@ class TestPrintTask(unittest.TestCase):
 
 class TestAnsibleRunnerTask(unittest.TestCase):
     """test AnsibleRunnerTask"""
+
     def setUp(self):
         super().setUp()
         self.data = yaml.safe_load(DUMMY_ANSIBLE_RUNNER_TASK_DATA)
@@ -191,8 +192,8 @@ class TestAnsibleRunnerTask(unittest.TestCase):
         self.mock_run.return_value = mock_result
 
         mock_result.rc = 0
-        mock_result.status = 'successful'
-        mock_result.stdout = 'foo'
+        mock_result.status = "successful"
+        mock_result.stdout = "foo"
         mock_result.stats = {}
 
         obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
@@ -206,8 +207,8 @@ class TestAnsibleRunnerTask(unittest.TestCase):
         self.mock_run.return_value = mock_result
 
         mock_result.rc = 2
-        mock_result.status = 'successful'
-        mock_result.stdout = 'foo'
+        mock_result.status = "successful"
+        mock_result.stdout = "foo"
         mock_result.stats = {}
 
         obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
@@ -216,8 +217,8 @@ class TestAnsibleRunnerTask(unittest.TestCase):
         self.assertEqual(result[0].data, {"stdout": "foo", "stats": {}})
 
         mock_result.rc = 0
-        mock_result.status = 'failed'
-        mock_result.stdout = 'foo'
+        mock_result.status = "failed"
+        mock_result.stdout = "foo"
         mock_result.stats = {}
 
         obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])

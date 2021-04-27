@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """service and task objects"""
-import ansible_runner
 import logging
 import os
 import random
 import time
+import ansible_runner
 from stevedore import driver
 
 from director import mixin
@@ -40,6 +40,7 @@ class TaskManager:
 
 class TaskResult:
     """task result object"""
+
     def __init__(self, status: bool, data: dict):
         self._status = status
         self._data = data
@@ -60,6 +61,7 @@ class TaskResult:
 
 class ServiceTask(BaseTask):
     """task related to a service"""
+
     @property
     def jobs(self) -> list:
         return self._data.get("jobs", [])
@@ -116,7 +118,7 @@ class DirectorServiceTask(ServiceTask):
             user_exec=user.User(args=self.DirectorArgs),
             orchestrations=self.jobs,
             defined_targets=self.hosts,
-            raw_return=True,
+            return_raw=True,
         )
 
         LOG.error(jobs)
@@ -152,6 +154,7 @@ class PrintTask(BaseTask):
 
 class AnsibleRunnerTask(BaseTask):
     """ansible task"""
+
     @property
     def playbook(self) -> str:
         return self._data.get("playbook")
@@ -168,12 +171,10 @@ class AnsibleRunnerTask(BaseTask):
             self.hosts,
             self.data,
         )
-        runner = ansible_runner.run(private_data_dir=self.working_dir,
-                                    playbook=self.playbook)
-        data = {
-            "stdout": runner.stdout,
-            "stats": runner.stats
-        }
+        runner = ansible_runner.run(
+            private_data_dir=self.working_dir, playbook=self.playbook
+        )
+        data = {"stdout": runner.stdout, "stats": runner.stats}
         # https://ansible-runner.readthedocs.io/en/stable/python_interface.html#the-runner-object
-        status = (runner.rc == 0 and runner.status == 'successful')
+        status = runner.rc == 0 and runner.status == "successful"
         return [TaskResult(status, data)]

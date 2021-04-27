@@ -87,7 +87,7 @@ class TestService(unittest.TestCase):
                 self.hosts = hosts
 
         class TestTaskB(TestTaskA):
-            """"alternate test type"""
+            """ "alternate test type"""
 
         with mock.patch(
             "builtins.open", mock.mock_open(read_data=DUMMY_SERVICE_DATA)

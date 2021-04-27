@@ -26,6 +26,7 @@ class BaseFileData:
 
 class BaseTask(task.Task):
     """base task"""
+
     def __init__(self, service: str, data: dict, hosts: list):
         self._service = service
         self._data = data
@@ -33,8 +34,7 @@ class BaseTask(task.Task):
         name = f"{service}-{data.get('id')}"
         provides = data.get("provides", [])
         requires = data.get("requires", [])
-        LOG.info("Creating %s: provides: %s, requires: %s", name, provides,
-                 requires)
+        LOG.info("Creating %s: provides: %s, requires: %s", name, provides, requires)
         super().__init__(name=name, provides=provides, requires=requires)
 
     @property
@@ -52,6 +52,7 @@ class BaseTask(task.Task):
     @property
     def task_id(self) -> str:
         return self._data.get("id")
+
     @property
     def action(self) -> str:
         return self._data.get("action")
