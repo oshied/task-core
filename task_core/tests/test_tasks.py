@@ -61,7 +61,7 @@ class TestTaskManager(unittest.TestCase):
         """test stevedore driver"""
         obj = tasks.TaskManager.instance()
         self.assertTrue(obj.get_driver("service"), tasks.ServiceTask)
-        self.assertTrue(obj.get_driver("director"), tasks.DirectorTask)
+        self.assertTrue(obj.get_driver("directord"), tasks.DirectordTask)
         self.assertTrue(obj.get_driver("print"), tasks.PrintTask)
         self.assertRaises(stevedore.exception.NoMatches, obj.get_driver, "doesnotexist")
 
@@ -100,8 +100,8 @@ class TestServiceTask(unittest.TestCase):
         self.assertTrue(result[0].status)
 
 
-class TestDirectorTask(unittest.TestCase):
-    """test DirectorTask"""
+class TestDirectordTask(unittest.TestCase):
+    """test DirectordTask"""
 
     def setUp(self):
         super().setUp()
@@ -109,7 +109,7 @@ class TestDirectorTask(unittest.TestCase):
 
     def test_object(self):
         """test basic object"""
-        obj = tasks.DirectorTask("foo", self.data, ["host-a", "host-b"])
+        obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
         self.assertEqual(obj.data, self.data)
         self.assertEqual(obj.hosts, ["host-a", "host-b"])
         self.assertEqual(obj.service, "foo")
@@ -117,15 +117,16 @@ class TestDirectorTask(unittest.TestCase):
         self.assertEqual(obj.action, "run")
         self.assertEqual(obj.jobs, self.data["jobs"])
 
-    @mock.patch("director.mixin.Mixin")
-    def test_execute(self, mock_mixin):
+    @mock.patch("directord.user.Manage")
+    @mock.patch("directord.mixin.Mixin")
+    def test_execute(self, mock_mixin, mock_manage):
         """test execute"""
-        obj = tasks.DirectorTask("foo", self.data, ["host-a", "host-b"])
+        obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
         result = obj.execute()
         self.assertTrue(result[0].status)
 
-    @mock.patch("director.user.Manage")
-    @mock.patch("director.mixin.Mixin")
+    @mock.patch("directord.user.Manage")
+    @mock.patch("directord.mixin.Mixin")
     def test_execute_fail(self, mock_mixin, mock_manage):
         """test execute"""
         mixin_obj = mock.MagicMock()
@@ -134,7 +135,7 @@ class TestDirectorTask(unittest.TestCase):
         mock_manage.return_value = manage_obj
         mixin_obj.exec_orchestrations.return_value = [b"foo"]
         manage_obj.poll_job.return_value = (False, "meh")
-        obj = tasks.DirectorTask("foo", self.data, ["host-a", "host-b"])
+        obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
         self.assertRaises(ExecutionFailed, obj.execute)
         mixin_obj.exec_orchestrations.assert_called_once_with(
             user_exec=manage_obj,

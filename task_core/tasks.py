@@ -7,8 +7,8 @@ import time
 
 import ansible_runner
 from stevedore import driver
-from director import mixin
-from director import user
+from directord import mixin
+from directord import user
 
 from .base import BaseTask
 from .exceptions import ExecutionFailed
@@ -86,10 +86,10 @@ class ServiceTask(BaseTask):
         return [TaskResult(True, {})]
 
 
-class DirectorTask(ServiceTask):
-    """Service task posting to director.
+class DirectordTask(ServiceTask):
+    """Service task posting to directord.
 
-    https://cloudnull.github.io/director/orchestrations.html#orchestration-library-usage
+    https://cloudnull.github.io/directord/orchestrations.html#orchestration-library-usage
 
     Execute a set of jobs against a director cluster. Execution returns a
     byte encoded list of jobs UUID.

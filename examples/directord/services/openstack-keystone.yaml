@@ -4,7 +4,7 @@ version: 1.0.0
 tasks:
   - id: init
     action: init
-    driver: director
+    driver: directord
     provides:
       - openstack-keystone.init
     requires:
@@ -21,7 +21,7 @@ tasks:
 
   - id: setup
     action: setup
-    driver: director
+    driver: directord
     provides:
       - openstack-keystone.setup
     requires:
@@ -37,7 +37,7 @@ tasks:
 
   - id: database
     action: database
-    driver: director
+    driver: directord
     provides:
       - openstack-keystone.database
     requires:
@@ -53,7 +53,7 @@ tasks:
 
   - id: bootstrap
     action: bootstrap
-    driver: director
+    driver: directord
     provides:
       - openstack-keystone.bootstrap
     requires:
