@@ -37,10 +37,10 @@ the bash script.
     virtualenv ~/test-venv
     source ~/test-venv/bin/activate
 
-    git clone https://github.com/cloudnull/director
+    git clone https://github.com/cloudnull/directord
     git clone https://github.com/mwhahaha/task-core
 
-    pushd director
+    pushd directord
     pip install .
     popd
 
@@ -56,13 +56,13 @@ the bash script.
     done
 
     cat > ~/catalog <<EOF
-    director_server:
+    directord_server:
       targets:
       - host: 192.168.24.2
         port: 22
         username: stack
 
-    director_clients:
+    directord_clients:
       args:
         port: 22
         username: stack
@@ -75,10 +75,10 @@ the bash script.
     pushd director
     # needed to get the share files in place
     pip install .
-    director bootstrap --catalog $HOME/catalog --catalog tools/director-bootstrap-catalog.yaml
+    directord bootstrap --catalog $HOME/catalog --catalog tools/directord-bootstrap-catalog.yaml
     popd
 
-    sudo chmod a+w /var/run/director.sock
+    sudo chmod a+w /var/run/directord.sock
 
     cat > ~/inventory.yml <<EOF
     hosts:
