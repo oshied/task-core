@@ -24,7 +24,7 @@ jobs:
   - echo: "service a run"
 """
 
-DUMMY_DIRECTOR_SERVICE_TASK_DATA = """
+DUMMY_DIRECTORD_SERVICE_TASK_DATA = """
 id: setup
 action: run
 provides:
@@ -105,7 +105,7 @@ class TestDirectordTask(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.data = yaml.safe_load(DUMMY_DIRECTOR_SERVICE_TASK_DATA)
+        self.data = yaml.safe_load(DUMMY_DIRECTORD_SERVICE_TASK_DATA)
 
     def test_object(self):
         """test basic object"""
@@ -117,9 +117,8 @@ class TestDirectordTask(unittest.TestCase):
         self.assertEqual(obj.action, "run")
         self.assertEqual(obj.jobs, self.data["jobs"])
 
-    @mock.patch("directord.user.Manage")
     @mock.patch("directord.mixin.Mixin")
-    def test_execute(self, mock_mixin, mock_manage):
+    def test_execute(self, mock_mixin):
         """test execute"""
         obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
         result = obj.execute()

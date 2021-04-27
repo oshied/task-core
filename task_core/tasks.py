@@ -91,14 +91,14 @@ class DirectordTask(ServiceTask):
 
     https://cloudnull.github.io/directord/orchestrations.html#orchestration-library-usage
 
-    Execute a set of jobs against a director cluster. Execution returns a
+    Execute a set of jobs against a directord cluster. Execution returns a
     byte encoded list of jobs UUID.
 
     :returns: List
     """
 
-    class DirectorArgs:  # pylint: disable=too-few-public-methods
-        """Arguments required to interface with Director."""
+    class DirectordArgs:  # pylint: disable=too-few-public-methods
+        """Arguments required to interface with Directord."""
 
         debug = False
         socket_path = "/var/run/directord.sock"
@@ -113,8 +113,8 @@ class DirectordTask(ServiceTask):
             self.data,
         )
 
-        _mixin = mixin.Mixin(args=self.DirectorArgs)
-        _user = user.Manage(args=self.DirectorArgs)
+        _mixin = mixin.Mixin(args=self.DirectordArgs)
+        _user = user.Manage(args=self.DirectordArgs)
 
         try:
             jobs = _mixin.exec_orchestrations(
@@ -138,7 +138,7 @@ class DirectordTask(ServiceTask):
                 LOG.error(info)
                 success = False
         if not success:
-            raise ExecutionFailed("Director job execution failed")
+            raise ExecutionFailed("Directord job execution failed")
         return [TaskResult(success, {})]
 
 
