@@ -119,7 +119,7 @@ class DirectorTask(ServiceTask):
         try:
             jobs = _mixin.exec_orchestrations(
                 user_exec=_user,
-                orchestrations=self.jobs,
+                orchestrations={"jobs": self.jobs},
                 defined_targets=self.hosts,
                 return_raw=True,
             )
