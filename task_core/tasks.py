@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """service and task objects"""
+import ansible_runner
 import logging
+import os
 import random
 import time
 from stevedore import driver
 
 from director import mixin
 from director import user
-from taskflow import task
+from .base import BaseTask
 
 
 LOG = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ class TaskManager:
             cls._instance = cls.__new__(cls)
         return cls._instance
 
-    def get_driver(self, name) -> task.Task:
+    def get_driver(self, name) -> BaseTask:
         if name not in self._types:
             self._types[name] = driver.DriverManager(
                 "task_core.task.types", name=name, invoke_on_load=False
@@ -52,45 +54,17 @@ class TaskResult:
         """rturn data info"""
         return self._data
 
+    def __repr__(self):
+        return repr({"status": self.status, "data": self.data})
 
-class ServiceTask(task.Task):
+
+class ServiceTask(BaseTask):
     """task related to a service"""
-
-    def __init__(self, service: str, data: dict, hosts: list):
-        self._service = service
-        self._data = data
-        self._hosts = hosts
-        name = f"{service}-{data.get('id')}"
-        provides = data.get("provides", [])
-        requires = data.get("requires", [])
-        LOG.info("Creating %s: provides: %s, requires: %s", name, provides, requires)
-        super().__init__(name=name, provides=provides, requires=requires)
-
-    @property
-    def data(self) -> dict:
-        return self._data
-
-    @property
-    def hosts(self) -> list:
-        return self._hosts
-
-    @property
-    def service(self) -> str:
-        return self._service
-
-    @property
-    def task_id(self) -> str:
-        return self._data.get("id")
-
-    @property
-    def action(self) -> str:
-        return self._data.get("action")
-
     @property
     def jobs(self) -> list:
         return self._data.get("jobs", [])
 
-    def execute(self, *args, **kwargs) -> list[TaskResult]:
+    def execute(self, *args, **kwargs) -> list:
         LOG.debug(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
@@ -127,7 +101,7 @@ class DirectorServiceTask(ServiceTask):
         socket_path = "/var/run/director.sock"
         mode = "orchestrate"
 
-    def execute(self, *args, **kwargs) -> list[TaskResult]:
+    def execute(self, *args, **kwargs) -> list:
         LOG.debug(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
@@ -157,14 +131,14 @@ class DirectorServiceTask(ServiceTask):
         return [TaskResult(success, {})]
 
 
-class PrintTask(ServiceTask):
+class PrintTask(BaseTask):
     """Task that just prints itself out"""
 
     @property
     def message(self):
         return self.data.get("message")
 
-    def execute(self, *args, **kwargs) -> list[TaskResult]:
+    def execute(self, *args, **kwargs) -> list:
         LOG.debug(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
@@ -174,3 +148,32 @@ class PrintTask(ServiceTask):
         )
         LOG.info("PRINT: %s", self.message)
         return [TaskResult(True, {})]
+
+
+class AnsibleRunnerTask(BaseTask):
+    """ansible task"""
+    @property
+    def playbook(self) -> str:
+        return self._data.get("playbook")
+
+    @property
+    def working_dir(self) -> str:
+        return self._data.get("working_dir", os.getcwd())
+
+    def execute(self, *args, **kwargs) -> list:
+        LOG.debug(
+            "ansible execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            args,
+            kwargs,
+            self.hosts,
+            self.data,
+        )
+        runner = ansible_runner.run(private_data_dir=self.working_dir,
+                                    playbook=self.playbook)
+        data = {
+            "stdout": runner.stdout,
+            "stats": runner.stats
+        }
+        # https://ansible-runner.readthedocs.io/en/stable/python_interface.html#the-runner-object
+        status = (runner.rc == 0 and runner.status == 'successful')
+        return [TaskResult(status, data)]

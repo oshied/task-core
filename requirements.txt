@@ -1,7 +1,9 @@
 # Director is currently unpublished, this pulls in director from git sources
--e git+https://github.com/cloudnull/director.git@main#egg=director
+# NOTE: pin to 0b88e0b1696d1d761addcde56ea874394245db06 due to cloudnull/director#7
+-e git+https://github.com/cloudnull/director.git@0b88e0b1696d1d761addcde56ea874394245db06#egg=director
 
 pbr!=2.1.0,>=2.0.0
 taskflow
 pyyaml
 stevedore
+ansible_runner

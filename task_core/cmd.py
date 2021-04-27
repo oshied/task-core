@@ -16,10 +16,6 @@ from task_core.inventory import Roles
 from task_core.service import Service
 import task_core.tasks
 
-logging.basicConfig(
-    format="[%(asctime)s] [%(levelname)s] %(message)s", level=logging.INFO
-)
-
 LOG = logging.getLogger(__name__)
 
 
@@ -138,6 +134,10 @@ def main():
 
 def example():
     """task-core-example"""
+    logging.basicConfig(
+        format="[%(asctime)s] [%(levelname)s] %(message)s", level=logging.DEBUG
+    )
+
     services_dir = os.path.join(
         sys.prefix, "share", "task-core", "examples", "framework", "services"
     )

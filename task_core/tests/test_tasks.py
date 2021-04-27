@@ -36,6 +36,16 @@ jobs:
   - RUN: systemctl enable chronyd
 """
 
+DUMMY_ANSIBLE_RUNNER_TASK_DATA = """
+id: ansible
+provides:
+  - ansible_task
+requires:
+  - something
+playbook: foo.yml
+working_dir: /working/dir
+"""
+
 
 class TestTaskManager(unittest.TestCase):
     """Test TaskManager object"""
@@ -98,7 +108,7 @@ class TestDirectorServiceTask(unittest.TestCase):
 
     def test_object(self):
         """test basic object"""
-        obj = tasks.PrintTask("foo", self.data, ["host-a", "host-b"])
+        obj = tasks.DirectorServiceTask("foo", self.data, ["host-a", "host-b"])
         self.assertEqual(obj.data, self.data)
         self.assertEqual(obj.hosts, ["host-a", "host-b"])
         self.assertEqual(obj.service, "foo")
@@ -146,8 +156,6 @@ class TestPrintTask(unittest.TestCase):
         self.assertEqual(obj.hosts, ["host-a", "host-b"])
         self.assertEqual(obj.service, "foo")
         self.assertEqual(obj.task_id, "print")
-        self.assertEqual(obj.action, None)
-        self.assertEqual(obj.jobs, [])
         self.assertEqual(obj.message, "message from service a")
 
     def test_execute(self):
@@ -156,3 +164,63 @@ class TestPrintTask(unittest.TestCase):
         result = obj.execute()
         self.assertTrue(result[0].status)
         self.assertEqual(result[0].data, {})
+
+
+class TestAnsibleRunnerTask(unittest.TestCase):
+    """test AnsibleRunnerTask"""
+    def setUp(self):
+        super().setUp()
+        self.data = yaml.safe_load(DUMMY_ANSIBLE_RUNNER_TASK_DATA)
+        runner_patcher = mock.patch("ansible_runner.run")
+        self.mock_run = runner_patcher.start()
+        self.addCleanup(runner_patcher.stop)
+
+    def test_object(self):
+        """test object"""
+        obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
+        self.assertEqual(obj.data, self.data)
+        self.assertEqual(obj.hosts, ["host-a"])
+        self.assertEqual(obj.service, "foo")
+        self.assertEqual(obj.task_id, "ansible")
+        self.assertEqual(obj.playbook, "foo.yml")
+        self.assertEqual(obj.working_dir, "/working/dir")
+
+    def test_execute(self):
+        """test execute"""
+        mock_result = mock.MagicMock()
+        self.mock_run.return_value = mock_result
+
+        mock_result.rc = 0
+        mock_result.status = 'successful'
+        mock_result.stdout = 'foo'
+        mock_result.stats = {}
+
+        obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
+        result = obj.execute()
+        self.assertTrue(result[0].status)
+        self.assertEqual(result[0].data, {"stdout": "foo", "stats": {}})
+
+    def test_execute_failure(self):
+        """test execute"""
+        mock_result = mock.MagicMock()
+        self.mock_run.return_value = mock_result
+
+        mock_result.rc = 2
+        mock_result.status = 'successful'
+        mock_result.stdout = 'foo'
+        mock_result.stats = {}
+
+        obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
+        result = obj.execute()
+        self.assertFalse(result[0].status)
+        self.assertEqual(result[0].data, {"stdout": "foo", "stats": {}})
+
+        mock_result.rc = 0
+        mock_result.status = 'failed'
+        mock_result.stdout = 'foo'
+        mock_result.stats = {}
+
+        obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
+        result = obj.execute()
+        self.assertFalse(result[0].status)
+        self.assertEqual(result[0].data, {"stdout": "foo", "stats": {}})
