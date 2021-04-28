@@ -75,6 +75,7 @@ class ServiceTask(BaseTask):
             self.hosts,
             self.data,
         )
+        LOG.info("Running %s", self)
         for j in self.jobs:
             if "echo" in j:
                 LOG.info(j.get("echo"))
@@ -83,6 +84,7 @@ class ServiceTask(BaseTask):
                 LOG.info("Unknown action: %s", j)
         # note: this return time needs to match the "provides" format type.
         # generally a list or dict
+        LOG.info("Completed %s", self)
         return [TaskResult(True, {})]
 
 
@@ -112,6 +114,7 @@ class DirectordTask(ServiceTask):
             self.hosts,
             self.data,
         )
+        LOG.info("Running %s", self)
 
         _mixin = mixin.Mixin(args=self.DirectordArgs)
         _user = user.Manage(args=self.DirectordArgs)
@@ -139,6 +142,7 @@ class DirectordTask(ServiceTask):
                 success = False
         if not success:
             raise ExecutionFailed("Directord job execution failed")
+        LOG.info("Completed %s", self)
         return [TaskResult(success, {})]
 
 
@@ -157,7 +161,9 @@ class PrintTask(BaseTask):
             self.hosts,
             self.data,
         )
+        LOG.info("Running %s", self)
         LOG.info("PRINT: %s", self.message)
+        LOG.info("Completed %s", self)
         return [TaskResult(True, {})]
 
 
@@ -180,10 +186,12 @@ class AnsibleRunnerTask(BaseTask):
             self.hosts,
             self.data,
         )
+        LOG.info("Running %s", self)
         runner = ansible_runner.run(
             private_data_dir=self.working_dir, playbook=self.playbook
         )
         data = {"stdout": runner.stdout, "stats": runner.stats}
         # https://ansible-runner.readthedocs.io/en/stable/python_interface.html#the-runner-object
         status = runner.rc == 0 and runner.status == "successful"
+        LOG.info("Completed %s", self)
         return [TaskResult(status, data)]

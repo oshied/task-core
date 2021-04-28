@@ -110,7 +110,7 @@ def main():
     flow = gf.Flow("root")
     add_services_to_flow(flow, services)
 
-    LOG.info("Running...")
+    LOG.info("Starting execution...")
     # NOTE(mwhahaha): directord doesn't work with parallel, use serial for now
     result = engines.run(flow, engine="serial")
     LOG.info("Done...")
