@@ -121,6 +121,7 @@ def main():
     LOG.info("Starting execution...")
     # NOTE(mwhahaha): directord doesn't work with parallel, use serial for now
     result = engines.run(flow, engine="serial")
+    LOG.info(f"Ran {len(result.keys())} tasks...")
     LOG.info("Done...")
     pprint.pprint(result)
 
@@ -153,6 +154,7 @@ def example():
 
     LOG.info("Running...")
     result = engines.run(flow, engine="parallel")
+    LOG.info(f"Ran {len(result.keys())} tasks...")
     pprint.pprint(result)
 
 
