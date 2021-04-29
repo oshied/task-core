@@ -31,7 +31,7 @@ def gen_scale_data():
         for service in random.sample(range(SERVICE_COUNT), k=random.randrange(1, 20)):
             services.append(f"service-{service}")
         roles[f"role-{role}"] = {"services": services}
-        roles_services.extend(service)
+        roles_services.extend(services)
 
     dump_yaml("roles.yaml", roles)
 
