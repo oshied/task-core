@@ -25,38 +25,46 @@ def gen_scale_data():
 
     # generate roles data
     roles = {}
+    roles_services = []
     for role in range(0, ROLE_COUNT):
         services = []
         for service in random.sample(range(SERVICE_COUNT), k=random.randrange(1, 20)):
             services.append(f"service-{service}")
         roles[f"role-{role}"] = {"services": services}
+        roles_services.extend(service)
 
     dump_yaml("roles.yaml", roles)
 
     # create sample services and relationship data
     provides = []
     for svc in range(0, SERVICE_COUNT):
+        service_id = f"service-{svc}"
         service = {
-            "id": f"service-{svc}",
+            "id": service_id,
             "type": "service",
             "version": "1.0.0",
             "tasks": [],
         }
         service_task_provides = []
         for tsk in range(random.randrange(1, 5)):
-            task_provides = f"service-{svc}-task-{tsk}"
+            task_id = f"task-{tsk}"
+            task_provides = f"{service_id}-{task_id}"
             task = {
                 "id": f"task-{tsk}",
                 "driver": "print",
-                "message": f"service-{svc} -> task-{tsk}",
+                "message": f"{service_id} -> {task_id}",
                 "provides": [task_provides],
                 "requires": [],
             }
             # add previous task requirement
             if tsk > 0:
-                task["requires"].append(f"service-{svc}-task-{tsk-1}")
+                task["requires"].append(f"{service_id}-task-{tsk-1}")
             # occasionally add up to 3 additional tasks to requires
-            if (len(provides) > 0) and (random.randrange(0, 100) > 75):
+            if (
+                len(provides) > 0
+                and service_id in roles_services
+                and random.randrange(0, 100) > 75
+            ):
                 task["requires"].extend(
                     random.sample(
                         provides, k=random.randrange(1, min(3, len(provides)))
@@ -65,10 +73,11 @@ def gen_scale_data():
             service_task_provides.append(task_provides)
             service["tasks"].append(task)
         # add provides at the end to prevent service tasks from requiring tasks
-        # from this service
-        provides.extend(service_task_provides)
+        # from this service only if the service is defined in a role
+        if service_id in roles_services:
+            provides.extend(service_task_provides)
 
-        dump_yaml(f"services/service-{svc}.yaml", service)
+        dump_yaml(f"services/{service_id}.yaml", service)
 
 
 if __name__ == "__main__":

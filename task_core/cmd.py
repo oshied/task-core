@@ -70,7 +70,7 @@ def load_services(services_dir) -> dict:
 def add_hosts_to_services(inventory, roles, services) -> dict:
     for host in inventory.hosts.keys():
         for svc in roles.get_services(inventory.hosts.get(host).get("role")):
-            LOG.info("Adding %s to %s", host, svc)
+            LOG.debug("Adding %s to %s", host, svc)
             try:
                 services[svc].add_host(host)
             except KeyError as e:
@@ -81,7 +81,11 @@ def add_hosts_to_services(inventory, roles, services) -> dict:
 def add_services_to_flow(flow, services) -> gf.Flow:
     for service_id in services:
         service = services.get(service_id)
-        LOG.info("Adding %s tasks...", service.name)
+        if len(service.hosts) == 0:
+            # skip services with no target hosts
+            LOG.debug("Skipping adding service %s due to no hosts...", service.name)
+            continue
+        LOG.debug("Adding %s tasks...", service.name)
         service_flow = gf.Flow(service.name)
         for task in service.build_tasks():
             service_flow.add(task)
