@@ -60,7 +60,9 @@ class Service(BaseFileData):
                 task_type = task_type_override
             else:
                 task_type = self._task_mgr.get_driver(_task.get("driver", "service"))
-            tasks.append(task_type(self.name, _task, self.hosts))
+            task = task_type(self.name, _task, self.hosts)
+            task.version = tuple(int(v) for v in self.version.split("."))
+            tasks.append(task)
         return tasks
 
     def save(self, location) -> None:
