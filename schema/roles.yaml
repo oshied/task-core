@@ -1,0 +1,36 @@
+$schema: http://json-schema.org/draft-07/schema#
+title: The roles file schema
+description: Schema for task-core roles files
+additionalProperties: true
+minProperties: 1
+default: {}
+type: object
+definitions:
+  service_name:
+    type: string
+    pattern: '^[a-zA-Z0-9\.\-_\ ]+$'
+patternProperties:
+  '^[a-zA-Z0-9][a-zA-Z0-9_\-\ \.]+$':
+    $id: "#/properties/role_name"
+    title: The role schema
+    type: object
+    additionalProperties: true
+    description: Role
+    properties:
+      services:
+        $id: "#/properties/role_name/properties/services"
+        title: Service list
+        description: List of services for a role
+        type: array
+        default: []
+        minItems: 1
+        uniqueItems: true
+        items:
+          $id: "#/properties/role_name/properties/services/items"
+          title: Service schema
+          description: Name of a service
+          type: string
+          anyOf:
+            - $ref: "#/definitions/service_name"
+    required:
+      - services

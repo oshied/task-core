@@ -1,0 +1,39 @@
+$schema: http://json-schema.org/draft-07/schema
+additionalProperties: true
+default: {}
+title: The inventory schema
+description: Schema for task-core inventory files
+required:
+  - hosts
+type: object
+definitions:
+  role_name:
+    type: string
+    pattern: '^[a-zA-Z0-9][a-zA-Z0-9\_\-\ \.]+$'
+properties:
+  hosts:
+    $id: "#/properties/hosts"
+    title: The hosts schema
+    description: Top level hosts designation
+    type: object
+    additionalProperties: false
+    default: {}
+    minProperties: 1
+    patternProperties:
+      '^[a-z0-9\-\.]+$':
+        $id: "#/properties/hosts/properties/host_name"
+        title: The host name schema
+        type: object
+        additionalProperties: true
+        default: {}
+        description: Host name
+        properties:
+          role:
+            $id: "#/properties/hosts/properties/role_name/properties/role"
+            title: Role assignment
+            description: Role designation
+            type: string
+            anyOf:
+              - $ref: "#/definitions/role_name"
+        required:
+          - role

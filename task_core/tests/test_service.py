@@ -15,6 +15,7 @@ tasks:
 
   - id: setup
     action: init
+    driver: service
     provides:
       - service-a.init
     jobs:
@@ -22,6 +23,7 @@ tasks:
 
   - id: run
     action: run
+    driver: service
     provides:
       - service-a.run
     requires:
@@ -31,6 +33,7 @@ tasks:
 
   - id: finalize
     action: finalize
+    driver: service
     provides:
       - service-a.finalize
     requires:
@@ -50,6 +53,11 @@ class TestService(unittest.TestCase):
         self.addCleanup(taskmgr_patcher.stop)
         self.mock_taskmgr = mock.MagicMock()
         self.mock_tm_instance.return_value = self.mock_taskmgr
+        validator_patcher = mock.patch(
+            "task_core.schema.ServiceSchemaValidator.instance"
+        )
+        self.mock_validator = validator_patcher.start()
+        self.addCleanup(validator_patcher.stop)
 
     def test_file_data(self):
         """test service file"""

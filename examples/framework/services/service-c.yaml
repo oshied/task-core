@@ -4,6 +4,7 @@ version: 1.0.0
 tasks:
   - id: setup
     action: init
+    driver: service
     provides:
       - service-c.init
     jobs:
@@ -11,6 +12,7 @@ tasks:
 
   - id: run
     action: run
+    driver: service
     provides:
       - service-c.run
     requires:
@@ -26,6 +28,7 @@ tasks:
 
   - id: finalize
     action: finalize
+    driver: service
     provides:
       - service-c.finalize
     requires:

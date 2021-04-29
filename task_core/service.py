@@ -4,6 +4,7 @@ import logging
 import yaml
 from .base import BaseFileData
 from .tasks import TaskManager
+from .schema import ServiceSchemaValidator
 
 
 LOG = logging.getLogger(__name__)
@@ -16,8 +17,9 @@ class Service(BaseFileData):
         self._data = None
         self._tasks = None
         self._hosts = []
-        self._task_mgr = TaskManager.instance()
         super().__init__(definition)
+        ServiceSchemaValidator.instance().validate(self._data)
+        self._task_mgr = TaskManager.instance()
 
     @property
     def hosts(self) -> list:

@@ -29,6 +29,14 @@ keystone:
 class TestInventory(unittest.TestCase):
     """Test Inventory object"""
 
+    def setUp(self):
+        super().setUp()
+        validator_patcher = mock.patch(
+            "task_core.schema.InventorySchemaValidator.instance"
+        )
+        self.mock_validator = validator_patcher.start()
+        self.addCleanup(validator_patcher.stop)
+
     def test_file_data(self):
         """test inventory file"""
         hosts = {"host-a": {"role": "keystone"}, "host-b": {"role": "basic"}}
@@ -41,10 +49,10 @@ class TestInventory(unittest.TestCase):
             self.assertEqual(obj.data, {"hosts": hosts})
             self.assertEqual(obj.hosts, hosts)
             self.assertEqual(obj.get_role_hosts(), hosts.keys())
+            self.mock_validator.assert_called_once()
 
     def test_role_filter(self):
         """test getting hosts by role"""
-
         with mock.patch(
             "builtins.open", mock.mock_open(read_data=DUMMY_INVENTORY_DATA)
         ) as open_mock:
@@ -55,6 +63,12 @@ class TestInventory(unittest.TestCase):
 
 class TestRoles(unittest.TestCase):
     """Test Roles object"""
+
+    def setUp(self):
+        super().setUp()
+        validator_patcher = mock.patch("task_core.schema.RolesSchemaValidator.instance")
+        self.mock_validator = validator_patcher.start()
+        self.addCleanup(validator_patcher.stop)
 
     def test_file_data(self):
         """test roles file"""
@@ -69,6 +83,7 @@ class TestRoles(unittest.TestCase):
             self.assertTrue(isinstance(obj.roles.get("basic"), inventory.Role))
             self.assertTrue(isinstance(obj.roles.get("keystone"), inventory.Role))
             self.assertEqual(obj.get_services("basic"), ["chronyd", "repos"])
+            self.mock_validator.assert_called_once()
 
     def test_missing_role(self):
         """test roles file"""

@@ -59,3 +59,18 @@ class BaseTask(task.Task):
 
     def execute(self, *args, **kwargs):
         raise NotImplementedError("Execute function needs to be implemented")
+
+
+class BaseInstance:  # pylint: disable=too-few-public-methods
+    """Base instance class"""
+
+    _instance = None
+
+    def __init__(self):
+        raise RuntimeError("Use instance()")
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            cls._instance = cls.__new__(cls)
+        return cls._instance

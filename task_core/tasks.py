@@ -11,25 +11,17 @@ from directord import mixin
 from directord import user
 
 from .base import BaseTask
+from .base import BaseInstance
 from .exceptions import ExecutionFailed
 
 LOG = logging.getLogger(__name__)
 
 
-class TaskManager:
+class TaskManager(BaseInstance):
     """task type loader"""
 
     _instance = None
     _types = {}
-
-    def __init__(self):
-        raise RuntimeError("Use instance()")
-
-    @classmethod
-    def instance(cls):
-        if cls._instance is None:
-            cls._instance = cls.__new__(cls)
-        return cls._instance
 
     def get_driver(self, name) -> BaseTask:
         if name not in self._types:

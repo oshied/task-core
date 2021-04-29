@@ -1,0 +1,145 @@
+$schema: http://json-schema.org/draft-07/schema
+additionalProperties: true
+default: {}
+title: The service schema
+description: Schema for task-core service files
+required:
+  - id
+  - version
+  - tasks
+  - type
+type: object
+definitions:
+  task_id:
+    type: string
+    pattern: "^[a-zA-Z0-9\\.\\-\\_]+$"
+  service_task:
+    type: object
+    properties:
+      id:
+        oneOf:
+          - $ref: "#/definitions/task_id"
+      action:
+        type: string
+      provides:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      requires:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      driver:
+        const: service
+      jobs:
+        type: array
+    required:
+      - id
+      - action
+      - driver
+      - jobs
+  print_task:
+    type: object
+    properties:
+      id:
+        oneOf:
+          - $ref: "#/definitions/task_id"
+      action:
+        type: string
+      provides:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      requires:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      driver:
+        cosnt: print
+      message:
+        type: string
+    required:
+      - id
+      - driver
+      - message
+  directord_task:
+    type: object
+    properties:
+      id:
+        oneOf:
+          - $ref: "#/definitions/task_id"
+      action:
+        type: string
+      provides:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      requires:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      driver:
+        const: directord
+      jobs:
+        type: array
+    required:
+      - id
+      - action
+      - driver
+      - jobs
+    type: object
+  ansible_runner_task:
+    type: object
+    properties:
+      id:
+        oneOf:
+          - $ref: "#/definitions/task_id"
+      action:
+        type: string
+      provides:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      requires:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      driver:
+        const: ansible_runner
+      playbook:
+        type: string
+      working_dir:
+        type: string
+    required:
+      - id
+      - action
+      - driver
+      - playbook
+    type: object
+
+properties:
+  id:
+    oneOf:
+      - $ref: "#/definitions/task_id"
+  version:
+    type: string
+    pattern: "^[0-9\\.]+$"
+  type:
+    const: service
+  tasks:
+    type: array
+    minItems: 1
+    items:
+      anyOf:
+        - $ref: "#/definitions/service_task"
+        - $ref: "#/definitions/print_task"
+        - $ref: "#/definitions/directord_task"
+        - $ref: "#/definitions/ansible_runner_task"
