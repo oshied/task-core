@@ -90,6 +90,7 @@ class TestServiceTask(unittest.TestCase):
         obj = tasks.ServiceTask("foo", self.data, ["host-a", "host-b"])
         result = obj.execute()
         self.assertTrue(result[0].status)
+        self.assertEqual(str(result), "[{'status': True, 'data': {}}]")
 
     @mock.patch("time.sleep")
     def test_execute_bad_job(self, mock_sleep):
@@ -126,8 +127,8 @@ class TestDirectordTask(unittest.TestCase):
 
     @mock.patch("directord.user.Manage")
     @mock.patch("directord.mixin.Mixin")
-    def test_execute_fail(self, mock_mixin, mock_manage):
-        """test execute"""
+    def test_execute_failure(self, mock_mixin, mock_manage):
+        """test execute fails"""
         mixin_obj = mock.MagicMock()
         manage_obj = mock.MagicMock()
         mock_mixin.return_value = mixin_obj
@@ -143,6 +144,16 @@ class TestDirectordTask(unittest.TestCase):
             return_raw=True,
         )
         manage_obj.poll_job.assert_called_once_with(job_id="foo")
+
+    @mock.patch("directord.user.Manage")
+    @mock.patch("directord.mixin.Mixin")
+    def test_execute_exception(self, mock_mixin, mock_manage):
+        """test execute throws exception"""
+        mixin_obj = mock.MagicMock()
+        mock_mixin.return_value = mixin_obj
+        mixin_obj.exec_orchestrations.side_effect = Exception("fail")
+        obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
+        self.assertRaises(Exception, obj.execute)
 
 
 class TestPrintTask(unittest.TestCase):
@@ -205,7 +216,7 @@ class TestAnsibleRunnerTask(unittest.TestCase):
         self.assertEqual(result[0].data, {"stdout": "foo", "stats": {}})
 
     def test_execute_failure(self):
-        """test execute"""
+        """test execute failure"""
         mock_result = mock.MagicMock()
         self.mock_run.return_value = mock_result
 
