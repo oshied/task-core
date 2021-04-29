@@ -59,7 +59,6 @@ class Cli:
 
 
 def load_services(services_dir) -> dict:
-    LOG.info("Loading services from: %s", services_dir)
     files = glob.glob(os.path.join(services_dir, "**", "*.yaml"), recursive=True)
     services = {}
     for file in files:
@@ -101,13 +100,18 @@ def main():
     logging.basicConfig(
         format="[%(asctime)s] [%(levelname)s] %(message)s", level=log_level
     )
+    LOG.info("Loading services from %s", args.services_dir)
     services = load_services(args.services_dir)
+    LOG.info("Loading inventory from %s....", args.inventory_file)
     inventory = Inventory(args.inventory_file)
+    LOG.info("Loading roles from %s....", args.roles_file)
     roles = Roles(args.roles_file)
 
+    LOG.info("Adding hosts to services...")
     add_hosts_to_services(inventory, roles, services)
 
     flow = gf.Flow("root")
+    LOG.info("Adding services to flow...")
     add_services_to_flow(flow, services)
 
     LOG.info("Starting execution...")
