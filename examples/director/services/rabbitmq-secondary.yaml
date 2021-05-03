@@ -1,0 +1,30 @@
+id: rabbitmq-secondary
+type: service
+version: 1.0.0
+tasks:
+  - id: setup
+    action: run
+    provides:
+      - rabbitmq.secondary
+    requires:
+      - rabbitmq.init
+    jobs:
+      - QUERY: rabbitmq_ssl_cert_output
+      - RUN: >-
+          echo -e "{{ query.values() | map(attribute="rabbitmq_ssl_cert_output") | select("defined") | list | first }}" | tee {{ rabbitmq_ssl_cert }};
+      - RUN: chown rabbitmq:rabbitmq {{ rabbitmq_ssl_cert }}
+      - QUERY: rabbitmq_ssl_key_output
+      - RUN: >-
+          echo -e "{{ query.values() | map(attribute="rabbitmq_ssl_key_output") | select("defined") | list | first }}" | tee {{ rabbitmq_ssl_key }};
+      - RUN: chown rabbitmq:rabbitmq {{ rabbitmq_ssl_key }}
+      - QUERY: rabbitmq_primary
+      - RUN: echo "{{ query }}" | tee /tmp/query-dump2
+      - RUN: >-
+          --skip-cache
+          systemctl start rabbitmq-server.service;
+          sleep 5;
+          rabbitmqctl stop_app;
+          sleep 5;
+          rabbitmqctl join_cluster "rabbit@{{ query.values() | map(attribute="rabbitmq_primary") | select("defined") | list | first }}";
+          sleep 5;
+          rabbitmqctl start_app;

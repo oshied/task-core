@@ -1,0 +1,50 @@
+id: rabbitmq
+type: service
+version: 1.0.0
+tasks:
+  - id: setup
+    action: run
+    provides:
+      - rabbitmq.init
+    requires:
+      - repos.init
+    jobs:
+      - ARG: rabbitmq_async_threads 128
+      - ARG: rabbitmq_process_limit 1048576
+      - ARG: rabbitmq_ulimit 65536
+      - ARG: rabbitmq_collect_statistics_interval 5000
+      - ARG: rabbitmq_ssl_cert /etc/rabbitmq/rabbitmq.pem
+      - ARG: rabbitmq_ssl_key /etc/rabbitmq/rabbitmq.key
+      - ARG: rabbitmq_ssl_ca_cert /etc/rabbitmq/rabbitmq-ca.pem
+      - ARG: rabbitmq_memory_high_watermark 0.2
+      - ARG: rabbitmq_cluster_partition_handling pause_minority
+      - ARG: rabbitmq_management_rates_mode basic
+      - ARG: rabbitmq_management_bind_address 0.0.0.0
+      - ARG: rabbitmq_mnesia_dump_log_write_threshold 300
+      - ARG: rabbitmq_ssl_port 5671
+      - ARG: rabbitmq_tcp_port 5672
+      - ARG: rabbitmq_cluster_name rabbitmq_cluster_1
+      - RUN: --stdout-arg rabbitmq_host ip -o r g 1 | awk '{print $7}'
+      - QUERY: rabbitmq_host
+      - RUN: >-
+          --run-once --stdout-arg rabbitmq_cookie uuidgen | sha1sum | awk '{print $1}'
+      - RUN: --stdout-arg directord_hostname hostname -f
+      - QUERY: directord_hostname
+      - RUN: --skip-cache dnf -y install rabbitmq-server erlang
+      - WORKDIR: /etc/systemd/system/rabbitmq-server.service.d
+      - ADD: --blueprint files/rabbitmq/systemd-limits.conf.j2 /etc/systemd/system/rabbitmq-server.service.d/limits.conf
+      - ADD: --blueprint files/rabbitmq/rabbitmq.conf.j2 /etc/rabbitmq/rabbitmq.conf
+      - RUN: restorecon -v /etc/rabbitmq/rabbitmq.conf
+      - ADD: --blueprint files/rabbitmq/rabbitmq-env.j2 /etc/rabbitmq/rabbitmq-env.conf
+      - RUN: restorecon -v /etc/rabbitmq/rabbitmq-env.conf
+      - RUN: systemctl daemon-reload
+      - RUN: systemctl enable rabbitmq-server.service
+      - RUN: >-
+          {% for _, value in query.items() %}
+          grep "{{ value['directord_hostname'] }}" /etc/hosts || (echo -e "{{ value['rabbitmq_host'] }} {{ value['directord_hostname'] }}" | tee -a /etc/hosts);
+          {% endfor %}
+      - QUERY: rabbitmq_cookie
+      - RUN: >-
+          echo -e "{{ query.values() | map(attribute="rabbitmq_cookie") | select("defined") | list | first }}" | tee /var/lib/rabbitmq/.erlang.cookie;
+      - RUN: chmod 600 /var/lib/rabbitmq/.erlang.cookie
+      - RUN: chown rabbitmq. /var/lib/rabbitmq/.erlang.cookie
