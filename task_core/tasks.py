@@ -7,8 +7,7 @@ import time
 
 import ansible_runner
 from stevedore import driver
-from directord import mixin
-from directord import user
+from directord import DirectordConnect
 
 from .base import BaseTask
 from .base import BaseInstance
@@ -83,20 +82,13 @@ class ServiceTask(BaseTask):
 class DirectordTask(ServiceTask):
     """Service task posting to directord.
 
-    https://cloudnull.github.io/directord/orchestrations.html#orchestration-library-usage
+    https://directord.com/library.html
 
     Execute a set of jobs against a directord cluster. Execution returns a
     byte encoded list of jobs UUID.
 
     :returns: List
     """
-
-    class DirectordArgs:  # pylint: disable=too-few-public-methods
-        """Arguments required to interface with Directord."""
-
-        debug = False
-        socket_path = "/var/run/directord.sock"
-        mode = "orchestrate"
 
     def execute(self, *args, **kwargs) -> list:
         LOG.debug(
@@ -108,15 +100,12 @@ class DirectordTask(ServiceTask):
         )
         LOG.info("Running %s", self)
 
-        _mixin = mixin.Mixin(args=self.DirectordArgs)
-        _user = user.Manage(args=self.DirectordArgs)
+        dc = DirectordConnect()
 
         try:
-            jobs = _mixin.exec_orchestrations(
-                user_exec=_user,
+            jobs = dc.orchestrate(
                 orchestrations=[{"jobs": self.jobs}],
                 defined_targets=self.hosts,
-                return_raw=True,
             )
         except Exception as e:
             LOG.error("Exception while executing orcestrations, %s", e)
@@ -124,18 +113,20 @@ class DirectordTask(ServiceTask):
 
         LOG.debug(jobs)
 
-        success = True
-        for item in [i.decode() for i in jobs]:
+        failure = list()
+        for item in jobs:
             LOG.debug("Waiting for job... %s", item)
-            status, info = _user.poll_job(job_id=item)
-            if not status:
+            status, info = dc.poll(job_id=item)
+            if status is False:
                 # TODO(mwhahaha): handle failures
                 LOG.error(info)
-                success = False
-        if not success:
+                failure.append(item)
+
+        if failure:
             raise ExecutionFailed("Directord job execution failed")
+
         LOG.info("Completed %s", self)
-        return [TaskResult(success, {})]
+        return [TaskResult(not any(failure), {})]
 
 
 class PrintTask(BaseTask):
