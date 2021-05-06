@@ -1,0 +1,27 @@
+id: rabbitmq-primary
+type: service
+version: 1.0.0
+tasks:
+  - id: setup
+    action: run
+    provides:
+      - rabbitmq.primary
+    requires:
+      - rabbitmq.init
+    jobs:
+      - RUN: >-
+          --stdout-arg rabbitmq_ssl_self_signed_subject
+          echo "/C=US/ST=Texas/L=San Antonio/O=IT/CN={{ directord_hostname }}"
+      - RUN: >-
+          openssl req -new -nodes -sha256 -x509 -subj
+          "{{ rabbitmq_ssl_self_signed_subject }}"
+          -days 3650
+          -keyout {{ rabbitmq_ssl_key }}
+          -out {{ rabbitmq_ssl_cert }}
+          -extensions v3_ca
+      - RUN: --stdout-arg rabbitmq_ssl_key_output cat {{ rabbitmq_ssl_key }}
+      - RUN: --stdout-arg rabbitmq_ssl_cert_output cat {{ rabbitmq_ssl_cert }}
+      - RUN: chown rabbitmq:rabbitmq {{ rabbitmq_ssl_cert }} {{ rabbitmq_ssl_key }}
+      - RUN: systemctl start rabbitmq-server.service
+      - RUN: sleep 5 && rabbitmqctl set_cluster_name {{ rabbitmq_cluster_name }}
+      - RUN: --stdout-arg rabbitmq_primary hostname -f
