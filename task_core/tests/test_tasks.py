@@ -138,8 +138,7 @@ class TestDirectordTask(unittest.TestCase):
         obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
         self.assertRaises(ExecutionFailed, obj.execute)
         mixin_obj.exec_orchestrations.assert_called_once_with(
-            user_exec=manage_obj,
-            orchestrations=[{"jobs": self.data.get("jobs")}],
+            [{"jobs": self.data.get("jobs")}],
             defined_targets=["host-a", "host-b"],
             return_raw=True,
         )
