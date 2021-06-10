@@ -72,6 +72,7 @@ tasks:
     requires:
       - service-a.run
     playbook: /foo/bar.yaml
+    inventory: /foo/inv.yaml
 """
 
 

@@ -158,6 +158,10 @@ class AnsibleRunnerTask(BaseTask):
         return self._data.get("playbook")
 
     @property
+    def inventory(self) -> str:
+        return self._data.get("inventory")
+
+    @property
     def working_dir(self) -> str:
         return self._data.get("working_dir", os.getcwd())
 
@@ -171,7 +175,9 @@ class AnsibleRunnerTask(BaseTask):
         )
         LOG.info("Running %s", self)
         runner = ansible_runner.run(
-            private_data_dir=self.working_dir, playbook=self.playbook
+            private_data_dir=self.working_dir,
+            playbook=self.playbook,
+            inventory=self.inventory,
         )
         data = {"stdout": runner.stdout, "stats": runner.stats}
         # https://ansible-runner.readthedocs.io/en/stable/python_interface.html#the-runner-object

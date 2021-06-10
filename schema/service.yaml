@@ -116,6 +116,8 @@ definitions:
         const: ansible_runner
       playbook:
         type: string
+      inventory:
+        type: string
       working_dir:
         type: string
     required:
