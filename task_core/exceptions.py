@@ -12,3 +12,7 @@ class InvalidService(Exception):
 
 class ExecutionFailed(Exception):
     """Exception for execute failures"""
+
+
+class InvalidFileData(Exception):
+    """Exception for Invalid File data"""

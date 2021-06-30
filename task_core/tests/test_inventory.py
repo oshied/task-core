@@ -36,6 +36,9 @@ class TestInventory(unittest.TestCase):
         )
         self.mock_validator = validator_patcher.start()
         self.addCleanup(validator_patcher.stop)
+        isfile_patcher = mock.patch("os.path.isfile", return_value=True)
+        self.mock_isfile = isfile_patcher.start()
+        self.addCleanup(isfile_patcher.stop)
 
     def test_file_data(self):
         """test inventory file"""
@@ -69,6 +72,9 @@ class TestRoles(unittest.TestCase):
         validator_patcher = mock.patch("task_core.schema.RolesSchemaValidator.instance")
         self.mock_validator = validator_patcher.start()
         self.addCleanup(validator_patcher.stop)
+        isfile_patcher = mock.patch("os.path.isfile", return_value=True)
+        self.mock_isfile = isfile_patcher.start()
+        self.addCleanup(isfile_patcher.stop)
 
     def test_file_data(self):
         """test roles file"""

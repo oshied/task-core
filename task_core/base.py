@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """base classess"""
+import glob
 import logging
+import os
 import yaml
 from taskflow import task
+from .exceptions import InvalidFileData
+from .utils import merge_dict
 
 LOG = logging.getLogger(__name__)
 
@@ -12,8 +16,27 @@ class BaseFileData:
 
     def __init__(self, definition):
         self._data = None
-        with open(definition) as fin:
-            self._data = yaml.safe_load(fin.read())
+        if os.path.isfile(definition):
+            # if we were given a file, load it
+            with open(definition) as fin:
+                self._data = yaml.safe_load(fin.read())
+        elif os.path.isdir(definition):
+            # if the definition is a directory, then find all the
+            # yaml files in the directory and merge them together
+            self._data = {}
+            files = glob.glob(os.path.join(definition, "**", "*.yaml"), recursive=True)
+            for file in files:
+                with open(file) as fin:
+                    self._data = merge_dict(self._data, yaml.safe_load(fin.read()))
+        elif isinstance(definition, dict):
+            self._data = definition
+        else:
+            raise InvalidFileData(
+                "Invalid file data provided. definition "
+                "should be either a file path, a directory "
+                "path, or a dict. definition provided was "
+                f"{type(definition)}"
+            )
 
     @property
     def data(self) -> dict:

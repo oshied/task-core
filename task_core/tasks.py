@@ -100,10 +100,10 @@ class DirectordTask(ServiceTask):
         )
         LOG.info("Running %s", self)
 
-        dc = DirectordConnect()
+        conn = DirectordConnect()
 
         try:
-            jobs = dc.orchestrate(
+            jobs = conn.orchestrate(
                 orchestrations=[{"jobs": self.jobs}],
                 defined_targets=self.hosts,
             )
@@ -116,7 +116,7 @@ class DirectordTask(ServiceTask):
         failure = list()
         for item in jobs:
             LOG.debug("Waiting for job... %s", item)
-            status, info = dc.poll(job_id=item)
+            status, info = conn.poll(job_id=item)
             if status is False:
                 # TODO(mwhahaha): handle failures
                 LOG.error(info)
