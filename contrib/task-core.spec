@@ -18,6 +18,9 @@ BuildArch:      noarch
 
 BuildRequires:  python3-pbr >= 2.0.0
 
+Recommends:     python3-%{name}
+Recommends:     %{name}-examples
+
 %description
 task-core
 
@@ -114,5 +117,5 @@ rm -rf *.egg-info
 # ---------------
 
 %changelog
-* Mon Jul 29 2021 Alex Schultz <aschultz@redhat.com> - 0.0.1-1
+* Thu Jul 29 2021 Alex Schultz <aschultz@redhat.com> - 0.0.1-1
 - Initial Release
