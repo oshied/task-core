@@ -4,3 +4,7 @@
 *.pyc
 .coverage
 .vscode
+build
+dist
+AUTHORS
+ChangeLog
