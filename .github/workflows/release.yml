@@ -1,0 +1,46 @@
+
+name: Task-Core release
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  pypi_push_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+    - name: Build the python package
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade twine build wheel setuptools
+        python3 -m build --no-isolation
+    # NOTE: Used for automatic pushes to pypi
+    # Enable when the PYPI token is stored as a secret within github.
+    # - name: Publish a Python distribution to PyPI
+    #   uses: pypa/gh-action-pypi-publish@release/v1
+    #   with:
+    #     user: __token__
+    #     password: ${{ secrets.PYPI_API_TOKEN }}
+    #     skip_existing: true
+    # - name: Release
+    #   uses: softprops/action-gh-release@v1
+    #   if: startsWith(github.ref, 'refs/tags/')
+    #   with:
+    #     files: dist/task*
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: build RPM package
+      id: rpm
+      uses: naveenrajm7/rpmbuild@master
+      with:
+        spec_file: "contrib/task-core.spec"
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: Binary RPM
+        path: ${{ steps.rpm.outputs.rpm_dir_path }}

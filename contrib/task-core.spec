@@ -38,7 +38,7 @@ Requires:       python3-stevedore
 Requires:       python3-taskflow
 Requires:       python3-yaml
 # these are backends
-Recommends:     directord
+Recommends:     python3dist(directord)
 Recommends:     python3-ansible-runner
 
 %{?python_provide:%python_provide python3-%{name}}
