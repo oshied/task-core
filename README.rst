@@ -23,7 +23,7 @@ Example invocation (from folder)
             --debug
 
 Example directord execution
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is an example that uses [https://github.com/cloudnull/directord] to setup
 an instance of keystone. The below bit of code assumes 4 nodes available
