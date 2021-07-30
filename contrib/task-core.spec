@@ -1,4 +1,5 @@
 %global debug_package %{nil}
+%{?!released_version: %global released_version 0.0.1}
 
 # ---------------
 # task-core
@@ -6,7 +7,7 @@
 
 Name:           task-core
 Summary:        task-core
-Version:        0.0.1
+Version:        %{released_version}
 Release:        1%{?dist}
 
 License:        ASL 2.0
