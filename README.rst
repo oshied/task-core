@@ -1,6 +1,11 @@
 task-core
 =========
 
+|CI Status|
+
+.. |CI Status| image:: https://github.com/mwhahaha/task-core/actions/workflows/py-tox.yml/badge.svg
+   :target: https://github.com/mwhahaha/task-core/actions
+
 Install
 ~~~~~~~
 .. code-block::
