@@ -1,0 +1,33 @@
+name: Build Release RPMs
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  build:
+    name: Build Release RPMs with Docker
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build builder container image
+      run: docker build -t task-core-builder -f ./contrib/container-build/Containerfile ./contrib/container-build
+
+    - name: Run builder container
+      run: docker run --net=host -v ${{ github.workspace }}/contrib:/home/builder/rpm task-core-builder
+
+    - name: Upload build Log artifacts on failure
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: build-logs-el8
+        path: contrib/build-*/*.log
+
+    - name: Upload RPM artifacts
+      uses: softprops/action-gh-release@v1
+      with:
+        files: contrib/build-*/*.rpm
+        fail_on_unmatched_files: true
+
