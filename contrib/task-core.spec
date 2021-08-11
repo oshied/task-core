@@ -1,5 +1,5 @@
 %global debug_package %{nil}
-%{?!released_version: %global released_version 0.0.1}
+%{?!released_version: %global released_version 0.0.2}
 
 # ---------------
 # task-core
