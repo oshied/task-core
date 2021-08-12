@@ -1,0 +1,10 @@
+hosts:
+  overcloud-controller-0:
+    role: controller
+  overcloud-controller-1:
+    role: controller
+  overcloud-controller-2:
+    role: controller
+  overcloud-novacompute-0:
+    role: compute
+

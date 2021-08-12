@@ -1,0 +1,22 @@
+id: boot_params_service
+type: service
+version: 1.0.0
+tasks:
+  - id: tuned
+    action: run
+    driver: directord
+    provides:
+      - boot-patams-tuned.init
+    requires:
+      - tuned.init
+    jobs:
+      # TODO: switch a tuned profile & restart
+      - RUN: systemctl restart tuned
+
+  - id: kernel-args
+    action: run
+    driver: directord
+    provides:
+      - kernel-args.init
+    jobs:
+      - RUN: echo "Do Kernel Arg Stuff"

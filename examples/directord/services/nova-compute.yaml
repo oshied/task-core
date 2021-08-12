@@ -1,0 +1,171 @@
+id: nova_compute
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-nova-compute.init
+    requires:
+      - config.init
+      - rabbitmq.init
+      - memcached.init
+      - openstack-cinder.init
+      - openstack-glance.init
+      - openstack-neutron.init
+      - openstack-nova.init
+      - openstack-placement.init
+    jobs:
+      - QUERY: cinder_admin_pass
+      - QUERY: glance_admin_pass
+      - QUERY: neutron_admin_pass
+      - QUERY: nova_admin_pass
+      - QUERY: placement_admin_pass
+      - RUN: >-
+          --stdout-arg nova_compute_memcached_servers
+          {% set hosts = [] %}
+          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | list %}
+          {% set _ = hosts.append(h ~ ":11211") %}
+          {% endfor %}
+          echo -n "{{ hosts | join(',') }}";
+      - QUERY: rabbitmq_transport_url
+
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-nova-compute.setup
+    requires:
+      - config.init
+      - openstack-nova-compute.init
+      - openstack-nova.init
+      - repos.init
+    jobs:
+      - DNF: openstack-nova-compute
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf DEFAULT debug True
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | list | first }}"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf DEFAULT my_ip "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf DEFAULT host "{{ deployment_host }}"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf DEFAULT rootwrap_config /etc/nova/rootwrap.conf
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf DEFAULT compute_driver libvirt.LibvirtDriver
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf DEFAULT log_dir /var/log/nova/
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf DEFAULT state_path /var/lib/nova/
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf api auth_strategy keystone
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf keystone_authtoken auth_url "http://{{ ctlplane_vip }}:5000"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf keystone_authtoken memcached_servers "{{ nova_compute_memcached_servers }}"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf keystone_authtoken auth_type password
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf keystone_authtoken project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf keystone_authtoken user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf keystone_authtoken project_name service
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf keystone_authtoken username nova
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf keystone_authtoken password "{{ query.values() | map(attribute='nova_admin_pass') | select('defined') | list | first }}"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf vnc enabled true
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf vnc server_listen "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf vnc server_proxyclient_address "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf vnc novncproxy_base_url "http://{{ ctlplane_vip }}:6080/vnc_auto.html"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf oslo_concurrency lock_path /var/lib/nova/tmp
+      # libvirt
+      - RUN: >-
+          if [ $(egrep -c '(vmx|svm)' /proc/cpuinfo) -gt 0 ]; then
+            crudini --set /etc/nova/nova.conf libvirt virt_type qemu;
+          else
+            crudini --del /etc/nova/nova.conf libvirt virt_type qemu;
+          fi
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf libvirt cpu-model host-model
+      # cinder
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf cinder catalog_info volumev3:cinderv3:internalUR
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf cinder region_name RegionOne
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf cinder auth_type v3password
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf cinder project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf cinder user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf cinder project_name service
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf cinder auth_url "http://{{ ctlplane_vip }}:5000"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf cinder username cinder
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf cinder password "{{ query.values() | map(attribute='cinder_admin_pass') | select('defined') | list | first }}"
+      # neutron
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron ovs_bridge br-int
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron default_floating_pool public
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron region_name RegionOne
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron auth_type password
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron project_name service
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron auth_url "http://{{ ctlplane_vip }}:5000"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron username neutron
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf neutron password "{{ query.values() | map(attribute='neutron_admin_pass') | select('defined') | list | first }}"
+      # placement
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf placement region_name RegionOne
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf placement auth_type password
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf placement project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf placement user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf placement project_name service
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf placement auth_url "http://{{ ctlplane_vip }}:5000"
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf placement username placement
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf placement password "{{ query.values() | map(attribute='placement_admin_pass') | select('defined') | list | first }}"
+      # glance
+      - RUN: >-
+          crudini --set /etc/nova/nova.conf glance api_servers "http://{{ ctlplane_vip }}:9292"
+
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - openstack-nova-compute.service
+    requires:
+      - openstack-nova-compute.setup
+      - libvirt.service
+    jobs:
+      - RUN: --skip-cache systemctl enable openstack-nova-compute.service
+      - RUN: --skip-cache systemctl restart openstack-nova-compute.service

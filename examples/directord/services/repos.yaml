@@ -11,5 +11,7 @@ tasks:
       - RUN: >-
           --skip-cache --stdout-arg tripleo_repo_rpm
           curl -s https://trunk.rdoproject.org/centos8/component/tripleo/current/ | egrep -o '"python3-tripleo-repos.*rpm"' | tr -d "\""
-      - RUN: --skip-cache dnf install -y https://trunk.rdoproject.org/centos8/component/tripleo/current/{{ tripleo_repo_rpm }}
+      - RUN: --skip-cache dnf -y -q install https://trunk.rdoproject.org/centos8/component/tripleo/current/{{ tripleo_repo_rpm }}
       - RUN: --skip-cache tripleo-repos --stream -b master current-tripleo ceph
+      - RUN: --skip-cache dnf -y -q clean all
+      - RUN: --skip-cache dnf -y -q makecache

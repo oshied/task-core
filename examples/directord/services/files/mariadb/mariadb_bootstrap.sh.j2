@@ -1,0 +1,32 @@
+#/bin/bash
+DB_MAX_TIMEOUT=30
+set -ex
+if [ -f /var/lib/mysql/.mysql_bootstrap ]; then
+    echo "Mariadb already bootstraped"
+    exit 0
+fi
+
+# ensure db exists
+sudo -u mysql mysql_install_db
+
+# spawn mysql for securing
+timeout ${DB_MAX_TIMEOUT} /bin/bash -c "while pgrep -af /usr/bin/mysqld_safe | grep -q -v grep; do sleep 1; done"
+mysqld_safe --skip-networking --wsrep-on=OFF &
+timeout ${DB_MAX_TIMEOUT} /bin/bash -c "until mysqladmin -uroot ping 2>/dev/null; do sleep 1; done"
+
+# secure users
+cat | mysql -B -uroot <<EOF
+UPDATE mysql.user SET Password = PASSWORD("{{ mysql_root_password }}") WHERE User='root';
+DELETE FROM mysql.user WHERE User='';
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+# galera clustercheck
+{%- for v in tripleo_cluster_addresses %}
+GRANT PROCESS ON *.* TO 'clustercheckuser'@'{{ v }}' IDENTIFIED BY 'clustercheckpassword!';
+{%- endfor %}
+FLUSH PRIVILEGES;
+SHUTDOWN;
+EOF
+
+touch /var/lib/mysql/.mysql_bootstrap

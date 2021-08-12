@@ -34,6 +34,7 @@ Summary:        Python library code for task-core
 
 Requires:       %{name} = %{version}-%{release}
 # python requirements
+Requires:       python3-networkx
 Requires:       python3-stevedore
 Requires:       python3-taskflow
 Requires:       python3-yaml

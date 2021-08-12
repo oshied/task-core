@@ -1,0 +1,20 @@
+id: tripleo_firewall
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - tripleo_firewall.init
+    requires:
+      - repos.init
+    jobs:
+      - DNF: iptables-services
+      # TODO(mwhahaha): disable firewall for now
+      - RUN: systemctl disable firewalld || true
+      - RUN: systemctl stop firewalld || true
+      - RUN: iptables -F
+      - RUN: iptables-save > /etc/sysconfig/iptables
+      - RUN: systemctl enable iptables
+      - RUN: systemctl start iptables

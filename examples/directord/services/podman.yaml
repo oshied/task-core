@@ -1,0 +1,15 @@
+id: podman
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - podman.init
+    requires:
+      - repos.init
+    jobs:
+      - DNF: podman
+      - RUN: systemctl start podman.socket
+      - RUN: systemctl enable podman.socket

@@ -6,9 +6,12 @@ import logging
 import os
 import pprint
 import sys
-
 from datetime import datetime
+
+import networkx
+
 from taskflow import engines
+from taskflow import exceptions as tf_exc
 from taskflow.patterns import graph_flow as gf
 
 from .exceptions import InvalidService
@@ -59,7 +62,7 @@ class Cli:
             "--noop",
             action="store_true",
             default=False,
-            help=("Do not run the deployment, only process the tasks")
+            help=("Do not run the deployment, only process the tasks"),
         )
         args = self.parser.parse_args()
         return args
@@ -97,10 +100,16 @@ def add_services_to_flow(flow, services) -> gf.Flow:
             LOG.warning("Skipping adding service %s due to no hosts...", service.name)
             continue
         LOG.debug("Adding %s tasks...", service.name)
-        service_flow = gf.Flow(service.name)
-        for task in service.build_tasks():
-            service_flow.add(task)
-        flow.add(service_flow)
+        try:
+            for task in service.build_tasks():
+                flow.add(task)
+        except tf_exc.DependencyFailure:
+            dot = networkx.drawing.nx_pydot.to_pydot(
+                flow._graph
+            )  # pylint: disable=protected-access
+            dot.write_svg("failure.svg")
+            LOG.error("Failure graph svg written out to failure.svg")
+            raise
     return flow
 
 
@@ -136,6 +145,11 @@ def main():
         LOG.info("Ran %s tasks...", len(result.keys()))
     else:
         result = None
+        dot = networkx.drawing.nx_pydot.to_pydot(
+            flow._graph
+        )  # pylint: disable=protected-access
+        dot.write_svg("noop.svg")
+        LOG.info("Task graph written out to noop.svg")
         LOG.info("Skipping execution due to --noop...")
     end = datetime.now()
     LOG.info("Elapsed time: %s", end - start)

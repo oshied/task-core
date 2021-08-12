@@ -1,0 +1,17 @@
+---
+network_config:
+- type: ovs_bridge
+  name: br-ex
+  use_dhcp: false
+  dns_servers: {{ tripleo_dns_servers }}
+  domain: []
+  addresses:
+  - ip_netmask: {{ tripleo_network_ips[deployment_host] }}/24
+  routes:
+  - default: true
+    next_hop: {{ ctlplane_route }}
+  members:
+  - type: interface
+    name: nic1
+    # force the MAC address of the bridge to this interface
+    primary: true

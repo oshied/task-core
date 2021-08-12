@@ -1,5 +1,12 @@
 # Set ERLANG VM parameters
-NODENAME=rabbit@{{ directord_hostname }}
+#ERL_INETRC=/etc/rabbitmq/inetrc
+ERL_EPMD_ADDRESS={{ tripleo_network_ips[deployment_host] }}
+LANG=en_US.UTF-8
+LC_ALL=en_US.UTF-8
+NODENAME=rabbit@{{ deployment_host }}
+RABBITMQ_CTL_DIST_PORT_MAX={{ rabbitmq_ctl_dist_port_max | int }}
+RABBITMQ_CTL_DIST_PORT_MIN={{ rabbitmq_ctl_dist_port_min | int }}
 RABBITMQ_IO_THREAD_POOL_SIZE={{ rabbitmq_async_threads }}
-RABBITMQ_SERVER_ERL_ARGS="+P {{ rabbitmq_process_limit }}"
-RABBITMQ_USE_LONGNAME=true
+RABBITMQ_SERVER_ERL_ARGS="+P {{ rabbitmq_process_limit }} +sbwt none +sbwtdcpu none +sbwtdio none"
+# export RABBITMQ_SERVER_ERL_ARGS="+P {{ rabbitmq_process_limit }} -kernel inet_dist_listen_min {{ rabbitmq_inet_listen_min }} -kernel inet_dist_listen_max {{ rabbitmq_inet_listen_max }} +sbwt none +sbwtdcpu none +sbwtdio none"
+RABBITMQ_USE_LONGNAME=false

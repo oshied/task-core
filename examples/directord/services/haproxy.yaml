@@ -1,0 +1,18 @@
+id: haproxy
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - haproxy.init
+    requires:
+      - network.init
+      - config.init
+      - repos.init
+    jobs:
+      - DNF: haproxy
+      - ADD: --blueprint files/haproxy/haproxy.cfg.j2 /etc/haproxy/haproxy.cfg
+      - RUN: systemctl enable haproxy
+      - RUN: --skip-cache systemctl restart haproxy

@@ -1,0 +1,131 @@
+id: cinder_api
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-cinder.init
+    requires:
+      - config.init
+      # provides mysql_root_password
+      - mariadb.init
+      - rabbitmq.config
+    jobs:
+      - ARG: cinder_region RegionOne
+      - ARG: cinder_db_username cinder
+      - ARG: cinder_db_password secrete
+      - RUN: --stdout-arg cinder_db_host echo "{{ ctlplane_vip }}"
+      - ARG: cinder_db_name cinder
+      - ARG: cinder_admin_pass cinder
+      - QUERY: rabbitmq_transport_url
+
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-cinder.setup
+    requires:
+      - config.init
+      - openstack-cinder.init
+      - repos.init
+      - httpd.init
+    jobs:
+      - DNF: openstack-cinder
+      - RUN: echo "# file managed elsewhere" > /etc/httpd/conf.d/00-cinder-api.conf
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf database connection
+          "mysql+pymysql://{{ cinder_db_username }}:{{ cinder_db_password }}@{{ cinder_db_host }}/{{ cinder_db_name }}?read_default_file=/etc/my.cnf.d/tripleo.cnf&read_default_group=tripleo"
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | list | first }}"
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf api auth_strategy keystone
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf keystone_authtoken auth_url "http://{{ ctlplane_vip }}:5000"
+      # TODO(mwhahaha) memcached hosts
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf keystone_authtoken memcached_server "127.0.0.1:11211"
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf keystone_authtoken auth_type password
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf keystone_authtoken project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf keystone_authtoken user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf keystone_authtoken project_name service
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf keystone_authtoken username cinder
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf keystone_authtoken password "{{ cinder_admin_pass }}"
+      - RUN: >-
+          crudini --set /etc/cinder/cinder.conf oslo_concurrency lock_path /var/lib/cinder/tmp
+      - WORKDIR: --chown cinder /var/www/cgi-bin/cinder
+      - RUN: cp /usr/bin/cinder-wsgi /var/www/cgi-bin/cinder/cinder-api
+      - ADD: >
+          --blueprint files/cinder/wsgi-cinder.conf.j2
+          /etc/httpd/conf.d/wsgi-cinder.conf
+
+  - id: keystone
+    action: keystone
+    driver: directord
+    provides:
+      - openstack-cinder.keystone
+    requires:
+      - openstack-keystone.cloud-config
+      - openstack-cinder.init
+    jobs:
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud user create --or-show cinder
+          --domain default --password "{{ cinder_admin_pass }}"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud role add --project service --user cinder admin
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud service show cinderv3 ||
+          openstack --os-cloud overcloud service create --name cinderv3
+          --description "Cinder API" volumev3
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface public --service cinderv3 | grep -q cinderv3||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          cinderv3 public "http://{{ ctlplane_vip }}:8776/v3/%(tenant_id)s"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface internal --service cinderv3 | grep -q cinderv3||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          cinderv3 internal "http://{{ ctlplane_vip }}:8776/v3/%(tenant_id)s"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface admin --service cinderv3 | grep -q cinderv3||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          cinderv3 admin "http://{{ ctlplane_vip }}:8776/v3/%(tenant_id)s"
+
+  - id: database
+    action: database
+    driver: directord
+    provides:
+      - openstack-cinder.database
+    requires:
+      - openstack-cinder.setup
+      - mariadb.start
+    jobs:
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "CREATE DATABASE IF NOT EXISTS cinder;"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' IDENTIFIED BY '{{ cinder_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' IDENTIFIED BY '{{ cinder_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "FLUSH PRIVILEGES;"
+      - RUN: --run-once cinder-manage db sync
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - openstack-cinder.service
+    requires:
+      - openstack-cinder.database
+      - openstack-cinder.keystone
+    jobs:
+      - RUN: --skip-cache systemctl reload httpd.service
+#

@@ -1,0 +1,31 @@
+Listen {{ tripleo_network_ips[deployment_host] }}:8776
+
+<VirtualHost {{ tripleo_network_ips[deployment_host] }}:8776>
+  ServerName {{ deployment_host }}
+
+  ## Vhost docroot
+  DocumentRoot "/var/www/cgi-bin/cinder"
+
+  ## Directories, there should at least be a declaration for /var/www/cgi-bin/cinder
+
+  <Directory "/var/www/cgi-bin/cinder">
+    Options -Indexes +FollowSymLinks +MultiViews
+    AllowOverride None
+    Require all granted
+  </Directory>
+
+  ## Logging
+  ErrorLog "/var/log/httpd/cinder_wsgi_error.log"
+  ServerSignature Off
+  CustomLog "/var/log/httpd/cinder_wsgi_access.log" combined 
+  SetEnvIf X-Forwarded-Proto https HTTPS=1
+
+  ## WSGI configuration
+  WSGIApplicationGroup %{GLOBAL}
+  WSGIDaemonProcess cinder-api display-name=cinder_wsgi group=cinder processes=2 threads=1 user=cinder
+  WSGIProcessGroup cinder-api
+  WSGIScriptAlias / "/var/www/cgi-bin/cinder/cinder-api"
+
+  ## Custom fragment
+  Timeout 60
+</VirtualHost>

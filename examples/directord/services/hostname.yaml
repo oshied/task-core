@@ -1,0 +1,14 @@
+id: hostname
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - hostname.init
+    jobs:
+      # for use with anything that wants a host specific value, we capture
+      # the deployment_hostname that can be used for a config dict
+      - RUN: --stdout-arg deployment_host hostname -s
+

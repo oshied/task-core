@@ -1,0 +1,115 @@
+id: rabbitmq
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - rabbitmq.init
+    requires:
+      - config.init
+      - repos.init
+    jobs:
+      - DNF: rabbitmq-server erlang
+      - ARG: rabbitmq_async_threads 128
+      - ARG: rabbitmq_process_limit 1048576
+      - ARG: rabbitmq_ulimit 65536
+      - ARG: rabbitmq_collect_statistics_interval 30000
+      - ARG: rabbitmq_memory_high_watermark 0.2
+      - ARG: rabbitmq_cluster_partition_handling pause_minority
+      - ARG: rabbitmq_queue_master_locator min-masters
+      - ARG: rabbitmq_management_rates_mode none
+      - ARG: rabbitmq_management_bind_address "127.0.0.1"
+      - ARG: rabbitmq_mnesia_dump_log_write_threshold 300
+      - ARG: rabbitmq_tcp_port 5672
+      - ARG: rabbitmq_default_user guest
+      - ARG: rabbitmq_default_pass NotAsSecrete
+      - ARG: rabbitmq_net_ticktime 15
+      - ARG: rabbitmq_inet_listen_min 25672
+      - ARG: rabbitmq_inet_listen_max 25672
+      - ARG: rabbitmq_ctl_dist_port_max 25683
+      - ARG: rabbitmq_ctl_dist_port_min 25673
+      - ARG: rabbitmq_cluster_name openstack_cluster
+      - RUN: --stdout-arg rabbitmq_host hostname -s
+      - QUERY: rabbitmq_host
+      - RUN: >-
+          --run-once
+          --stdout-arg rabbitmq_transport_url
+          {% set urls = [] %}
+          {% for h in   query.values() | map(attribute='rabbitmq_host') | select('defined') | list %}
+          {% set _ = urls.append(rabbitmq_default_user ~ ":" ~ rabbitmq_default_pass ~ "@" ~  h ~ ":5672") %}
+
+          {% endfor %}
+          echo -n "rabbit://{{ urls | join(',') }}/?ssl=0";
+
+
+  - id: config
+    action: run
+    driver: directord
+    provides:
+      - rabbitmq.config
+    requires:
+      - rabbitmq.init
+      - hosts.init
+    jobs:
+      - WORKDIR: /etc/systemd/system/rabbitmq-server.service.d
+      - ADD: --blueprint files/rabbitmq/systemd-limits.conf.j2 /etc/systemd/system/rabbitmq-server.service.d/limits.conf
+      - RUN: systemctl daemon-reload
+      - ADD: >
+          --blueprint files/rabbitmq/rabbitmq.conf.j2 /etc/rabbitmq/rabbitmq.conf
+          --chown rabbitmq
+          --chmod 0600
+      - ADD: >
+          --blueprint files/rabbitmq/rabbitmq-env.j2 /etc/rabbitmq/rabbitmq-env.conf
+          --chown rabbitmq
+          --chmod 0600
+      - ADD: >
+          --blueprint files/rabbitmq/inetrc.j2 /etc/rabbitmq/inetrc
+          --chown rabbitmq
+          --chmod 0600
+      - ADD: >
+          --blueprint files/rabbitmq/enabled_plugins.j2 /etc/rabbitmq/enabled_plugins
+          --chown rabbitmq
+          --chmod 0600
+      - RUN: restorecon -v /etc/rabbitmq/*
+      - RUN: >-
+          echo -e '{{ tripleo_rabbitmq_cookie }}' | tee /var/lib/rabbitmq/.erlang.cookie;
+      - RUN: chmod 600 /var/lib/rabbitmq/.erlang.cookie
+      - RUN: "chown rabbitmq: /var/lib/rabbitmq/.erlang.cookie"
+
+  - id: bootstrap
+    action: run
+    driver: directord
+    provides:
+      - rabbitmq.bootstrap
+    requires:
+      - rabbitmq.config
+    jobs:
+      - ADD: >
+          --blueprint files/rabbitmq/rabbitmq_bootstrap.sh.j2
+          /var/lib/rabbitmq/rabbitmq_bootstrap.sh
+          --chmod 0700
+          --chown root
+      - RUN: --run-once bash /var/lib/rabbitmq/rabbitmq_bootstrap.sh
+      - RUN: --run-once --stdout-arg rabbitmq_bootstrap_node cat /var/lib/rabbitmq/.rabbitmq_bootstrap
+
+      - QUERY: rabbitmq_bootstrap_node
+
+  - id: service
+    action: run
+    driver: directord
+    provides:
+      - rabbitmq.service
+    requires:
+      - rabbitmq.bootstrap
+      - rabbitmq.config
+    jobs:
+      - RUN: --stdout-arg rabbitmq_bootstrap_node echo "{{ query.values() | map(attribute='rabbitmq_bootstrap_node') | select('defined') | list | first }}"
+      - ADD: >
+          --blueprint files/rabbitmq/rabbitmq_setup.sh.j2
+          /var/lib/rabbitmq/rabbitmq_setup.sh
+          --chmod 0700
+          --chown root
+      - RUN: bash /var/lib/rabbitmq/rabbitmq_setup.sh
+      - RUN: systemctl enable rabbitmq-server.service

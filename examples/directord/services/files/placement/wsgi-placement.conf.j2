@@ -1,0 +1,28 @@
+Listen {{ tripleo_network_ips[deployment_host] }}:8778
+
+<VirtualHost {{ tripleo_network_ips[deployment_host] }}:8778>
+  ServerName overcloud-controller-0.internalapi.localdomain
+
+  ## Vhost docroot
+  DocumentRoot "/var/www/cgi-bin/placement"
+
+  ## Directories, there should at least be a declaration for /var/www/cgi-bin/placement
+
+  <Directory "/var/www/cgi-bin/placement">
+    Options -Indexes +FollowSymLinks +MultiViews
+    AllowOverride None
+    Require all granted
+  </Directory>
+
+  ## Logging
+  ErrorLog "/var/log/httpd/placement_wsgi_error.log"
+  ServerSignature Off
+  CustomLog "/var/log/httpd/placement_wsgi_access.log" combined 
+  SetEnvIf X-Forwarded-Proto https HTTPS=1
+
+  ## WSGI configuration
+  WSGIApplicationGroup %{GLOBAL}
+  WSGIDaemonProcess placement-api display-name=placement_wsgi group=placement processes=2 threads=1 user=placement
+  WSGIProcessGroup placement-api
+  WSGIScriptAlias /placement "/var/www/cgi-bin/placement/placement-api"
+</VirtualHost>

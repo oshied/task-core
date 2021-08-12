@@ -1,0 +1,30 @@
+Listen {{ tripleo_network_ips[deployment_host] }}:5000
+Listen {{ tripleo_network_ips[deployment_host] }}:35357
+
+<VirtualHost {{ tripleo_network_ips[deployment_host] }}:5000 {{ tripleo_network_ips[deployment_host] }}:35357>
+  ServerName {{ deployment_host }}
+
+  ## Vhost docroot
+  DocumentRoot "/var/www/cgi-bin/keystone"
+
+  ## Directories, there should at least be a declaration for /var/www/cgi-bin/keystone
+
+  <Directory "/var/www/cgi-bin/keystone">
+    Options -Indexes +FollowSymLinks +MultiViews
+    AllowOverride None
+    Require all granted
+  </Directory>
+
+  ## Logging
+  ErrorLog "/var/log/httpd/keystone_wsgi_error.log"
+  ServerSignature Off
+  CustomLog "/var/log/httpd/keystone_wsgi_access.log" combined
+  SetEnvIf X-Forwarded-Proto https HTTPS=1
+
+  ## WSGI configuration
+  WSGIApplicationGroup %{GLOBAL}
+  WSGIDaemonProcess keystone display-name=keystone group=keystone processes=4 threads=1 user=keystone
+  WSGIProcessGroup keystone
+  WSGIScriptAlias / "/var/www/cgi-bin/keystone/keystone-wsgi-public"
+  WSGIPassAuthorization On
+</VirtualHost>

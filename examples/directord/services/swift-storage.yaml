@@ -1,0 +1,187 @@
+id: swift_storage
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-swift-storage.init
+    requires:
+      - config.init
+    jobs:
+      - ARG: swift_region RegionOne
+      - ARG: swift_admin_pass swift
+      - RUN: --stdout-arg swift_storage_host_ip echo -n "{{ tripleo_network_ips[deployment_host] }}"
+      - QUERY: swift_storage_host_ip
+
+  - id: rsyncd-setup
+    action: rsyncd-setup
+    driver: directord
+    provides:
+      - openstack-swift-storage.rsyncd-setup
+    requires:
+      - config.init
+      - repos.init
+    jobs:
+      - DNF: rsync rsync-daemon
+      - ADD: --blueprint files/swift/rsyncd.conf.j2 /etc/rsyncd.conf
+
+  - id: account-setup
+    action: account-setup
+    driver: directord
+    provides:
+      - openstack-swift-storage.account-setup
+    requires:
+      - config.init
+      - openstack-swift-storage.init
+      - repos.init
+    jobs:
+      - DNF: openstack-swift-account
+      - RUN: >-
+          crudini --set /etc/swift/account-server.conf DEFAULT bind_ip "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/swift/account-server.conf DEFAULT bind_port 6002
+      - RUN: >-
+          crudini --set /etc/swift/account-server.conf DEFAULT devices "/srv/node"
+      - RUN: >-
+          crudini --set /etc/swift/account-server.conf DEFAULT mount_check false
+      - RUN: >-
+          crudini --set /etc/swift/account-server.conf DEFAULT log_level DEBUG
+      - RUN: >-
+          crudini --set /etc/swift/account-server.conf "pipeline:main" pipeline "healthcheck recon account-server"
+      - RUN: >-
+          crudini --set /etc/swift/account-server.conf "filter:recon" use "egg:swift#recon"
+      - RUN: >-
+          crudini --set /etc/swift/account-server.conf "filter:healthcheck" use "egg:swift#healthcheck"
+      - WORKDIR: --chown swift --chmod 0755 /var/cache/swift
+      - RUN: >-
+          crudini --set /etc/swift/account-server.conf "filter:recon" recon_cache_path "/var/cache/swift"
+
+  - id: container-setup
+    action: container-setup
+    driver: directord
+    provides:
+      - openstack-swift-storage.container-setup
+    requires:
+      - config.init
+      - openstack-swift-storage.init
+      - repos.init
+    jobs:
+      - DNF: openstack-swift-container
+      - RUN: >-
+          crudini --set /etc/swift/container-server.conf DEFAULT bind_ip "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/swift/container-server.conf DEFAULT bind_port 6001
+      - RUN: >-
+          crudini --set /etc/swift/container-server.conf DEFAULT devices "/srv/node"
+      - RUN: >-
+          crudini --set /etc/swift/container-server.conf DEFAULT mount_check false
+      - RUN: >-
+          crudini --set /etc/swift/container-server.conf DEFAULT log_level DEBUG
+      - RUN: >-
+          crudini --set /etc/swift/container-server.conf "pipeline:main" pipeline "healthcheck recon container-server"
+      - RUN: >-
+          crudini --set /etc/swift/container-server.conf "filter:recon" use "egg:swift#recon"
+      - WORKDIR: --chown swift --chmod 0755 /var/cache/swift
+      - RUN: >-
+          crudini --set /etc/swift/container-server.conf "filter:recon" recon_cache_path "/var/cache/swift"
+      - RUN: >-
+          crudini --set /etc/swift/container-server.conf "filter:healthcheck" use "egg:swift#healthcheck"
+
+  - id: object-setup
+    action: object-setup
+    driver: directord
+    provides:
+      - openstack-swift-storage.object-setup
+    requires:
+      - config.init
+      - openstack-swift-storage.init
+      - repos.init
+    jobs:
+      - DNF: openstack-swift-object
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf DEFAULT bind_ip "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf DEFAULT bind_port 6000
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf DEFAULT devices "/srv/node"
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf DEFAULT mount_check false
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf DEFAULT log_level DEBUG
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf "pipeline:main" pipeline "healthcheck recon object-server"
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf "filter:recon" use "egg:swift#recon"
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf "filter:healthcheck" use "egg:swift#healthcheck"
+      - WORKDIR: --chown root:swift --chmod 0775 /var/cache/swift
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf "filter:recon" recon_cache_path "/var/cache/swift"
+      - RUN: >-
+          crudini --set /etc/swift/object-server.conf "filter:recon" recon_lock_path "/var/lock"
+
+  - id: storage
+    action: storage
+    driver: directord
+    provides:
+      - openstack-swift-storage.storage
+    requires:
+      - openstack-swift-storage.account-setup
+      - openstack-swift-storage.container-setup
+      - openstack-swift-storage.object-setup
+    jobs:
+      - WORKDIR: --chown swift:swift --chmod 0755 /srv/node
+      - WORKDIR: --chown swift:swift --chmod 0755 /srv/node/d1
+
+  - id: rsyncd
+    action: rsyncd
+    driver: directord
+    provides:
+      - openstack-swift-storage.rsyncd
+    requires:
+      - openstack-swift-storage.storage
+      - openstack-swift-storage.rsyncd-setup
+    jobs:
+      - RUN: --skip-cache systemctl enable rsyncd
+      - RUN: --skip-cache systemctl restart rsyncd
+
+  - id: account-service
+    action: account-service
+    driver: directord
+    provides:
+      - openstack-swift-storage.account-service
+    requires:
+      - openstack-swift-storage.account-setup
+      - openstack-swift-storage.storage
+      - openstack-swift-ringbuilder.ring-sync
+    jobs:
+      - RUN: --skip-cache systemctl enable openstack-swift-account.service openstack-swift-account-auditor.service openstack-swift-account-reaper.service openstack-swift-account-replicator.service
+      - RUN: --skip-cache systemctl restart openstack-swift-account.service openstack-swift-account-auditor.service openstack-swift-account-reaper.service openstack-swift-account-replicator.service
+
+  - id: container-service
+    action: container-service
+    driver: directord
+    provides:
+      - openstack-swift-storage.container-service
+    requires:
+      - openstack-swift-storage.container-setup
+      - openstack-swift-storage.storage
+      - openstack-swift-ringbuilder.ring-sync
+    jobs:
+      - RUN: --skip-cache systemctl enable openstack-swift-container.service openstack-swift-container-auditor.service openstack-swift-container-replicator.service openstack-swift-container-updater.service
+      - RUN: --skip-cache systemctl restart openstack-swift-container.service openstack-swift-container-auditor.service openstack-swift-container-replicator.service openstack-swift-container-updater.service
+
+  - id: object-service
+    action: object-service
+    driver: directord
+    provides:
+      - openstack-swift-storage.object-service
+    requires:
+      - openstack-swift-storage.object-setup
+      - openstack-swift-storage.storage
+      - openstack-swift-ringbuilder.ring-sync
+    jobs:
+      - RUN: --skip-cache systemctl enable openstack-swift-object.service openstack-swift-object-auditor.service openstack-swift-object-replicator.service openstack-swift-object-updater.service
+      - RUN: --skip-cache systemctl restart openstack-swift-object.service openstack-swift-object-auditor.service openstack-swift-object-replicator.service openstack-swift-object-updater.service

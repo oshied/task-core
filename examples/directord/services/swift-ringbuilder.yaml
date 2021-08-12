@@ -1,0 +1,118 @@
+id: swift_ringbuilder
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-swift-ringbuilder.init
+    requires:
+      - openstack-swift-proxy.setup
+      - config.init
+      - repos.init
+    jobs:
+      - DNF: python3-swift
+      - COPY: --chmod 0755 files/swift/ringbuilder.sh /etc/swift/ringbuilder.sh
+      - ARG: swift_storage_part_power 10
+      - ARG: swift_storage_part_replicas 1
+      - ARG: swift_storage_part_min_part_hours 1
+      - RUN: --stdout-arg swift_storage_host_ip echo -n "{{ tripleo_network_ips[deployment_host] }}"
+      - QUERY: swift_storage_host_ip
+
+  - id: account-ring
+    action: account-ring
+    driver: directord
+    provides:
+      - openstack-swift-ringbuilder.account-ring
+    requires:
+      - openstack-swift-ringbuilder.init
+    jobs:
+      - RUN: >-
+          --run-once
+          SWIFT_HOSTS="{{ query.values() | map(attribute='swift_storage_host_ip') | select('defined') | list | join(' ') }}"
+          SWIFT_PORT="6002"
+          /etc/swift/ringbuilder.sh account
+      - RUN: >-
+          --run-once
+          --skip-cache
+          swift-ring-builder /etc/swift/account.builder rebalance || if [ $? -gt 1 ]; then exit $?; else exit 0; fi
+      - RUN: >-
+          --run-once
+          --stdout-arg swift_storage_account_ring_base64
+          base64 -w 0 /etc/swift/account.ring.gz
+      - QUERY: swift_storage_account_ring_base64
+
+  - id: container-ring
+    action: container-ring
+    driver: directord
+    provides:
+      - openstack-swift-ringbuilder.container-ring
+    requires:
+      - openstack-swift-ringbuilder.init
+      - openstack-swift-proxy.setup
+    jobs:
+      - RUN: >-
+          --run-once
+          SWIFT_HOSTS="{{ query.values() | map(attribute='swift_storage_host_ip') | select('defined') | list | join(' ') }}"
+          SWIFT_PORT="6001"
+          /etc/swift/ringbuilder.sh container
+      - RUN: >-
+          --run-once
+          --skip-cache
+          swift-ring-builder /etc/swift/container.builder rebalance || if [ $? -gt 1 ]; then exit $?; else exit 0; fi
+      - RUN: >-
+          --run-once
+          --stdout-arg swift_storage_container_ring_base64
+          base64 -w 0 /etc/swift/container.ring.gz
+      - QUERY: swift_storage_container_ring_base64
+
+  - id: object-ring
+    action: object-ring
+    driver: directord
+    provides:
+      - openstack-swift-ringbuilder.object-ring
+    requires:
+      - openstack-swift-ringbuilder.init
+      - openstack-swift-proxy.setup
+    jobs:
+      - RUN: >-
+          --run-once
+          SWIFT_HOSTS="{{ query.values() | map(attribute='swift_storage_host_ip') | select('defined') | list | join(' ') }}"
+          SWIFT_PORT="6000"
+          /etc/swift/ringbuilder.sh object
+      - RUN: >-
+          --run-once
+          --skip-cache
+          swift-ring-builder /etc/swift/object.builder rebalance || if [ $? -gt 1 ]; then exit $?; else exit 0; fi
+      - RUN: >-
+          --run-once
+          --stdout-arg swift_storage_object_ring_base64
+          base64 -w 0 /etc/swift/object.ring.gz
+      - QUERY: swift_storage_object_ring_base64
+
+
+  - id: ring-sync
+    action: ring-sync
+    driver: directord
+    provides:
+      - openstack-swift-ringbuilder.ring-sync
+    requires:
+      - openstack-swift-ringbuilder.account-ring
+      - openstack-swift-ringbuilder.container-ring
+      - openstack-swift-ringbuilder.object-ring
+    jobs:
+      - RUN: >-
+          if ! test -f /etc/swift/account.ring.gz; then
+              echo "{{ query.values() | map(attribute='swift_storage_account_ring_base64') | select('defined') | list | first }}" | base64 -d > /etc/swift/account.ring.gz;
+          fi;
+      - RUN: >-
+          if ! test -f /etc/swift/container.ring.gz; then
+              echo "{{ query.values() | map(attribute='swift_storage_container_ring_base64') | select('defined') | list | first }}" | base64 -d > /etc/swift/container.ring.gz;
+          fi;
+      - RUN: >-
+          if ! test -f /etc/swift/object.ring.gz; then
+              echo "{{ query.values() | map(attribute='swift_storage_object_ring_base64') | select('defined') | list | first }}" | base64 -d > /etc/swift/object.ring.gz;
+          fi;
+
+

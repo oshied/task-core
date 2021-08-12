@@ -1,0 +1,48 @@
+---
+# ip bits
+ctlplane_vip: 192.168.24.99
+ctlplane_route: 192.168.24.1
+
+tripleo_dns_servers: ['1.1.1.1', '1.0.0.1']
+tripleo_network_ips:
+  overcloud-controller-0: 192.168.24.83
+  overcloud-controller-1: 192.168.24.95
+  overcloud-controller-2: 192.168.24.34
+  overcloud-novacompute-0: 192.168.24.60
+tripleo_controller_ips:
+  overcloud-controller-0: 192.168.24.83
+  overcloud-controller-1: 192.168.24.95
+  overcloud-controller-2: 192.168.24.34
+tripleo_cluster_addresses:
+  - 192.168.24.83
+  - 192.168.24.95
+  - 192.168.24.34
+
+
+# config options
+tripleo_keepalived:
+  priority:
+    overcloud-controller-0: 10
+    overcloud-controller-1: 20
+    overcloud-controller-2: 30
+  state:
+    overcloud-controller-0: MASTER
+    overcloud-controller-1: BACKUP
+    overcloud-controller-2: BACKUP
+  interface:
+    overcloud-controller-0: br-ex
+    overcloud-controller-1: br-ex
+    overcloud-controller-2: br-ex
+  router_id: 10
+  password: keepalived_pass
+
+tripleo_kernel_modules: {}
+tripleo_kernel_sysctl_settings: {}
+
+tripleo_rabbitmq_cookie: 8c96e9e0cb7deec37ec24f39b35ff65d58e01ff9
+tripleo_rabbitmq_hosts:
+  - overcloud-controller-0
+  - overcloud-controller-1
+  - overcloud-controller-2
+
+tripleo_selinux_enforce: 0

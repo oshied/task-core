@@ -1,0 +1,11 @@
+clouds:
+  overcloud:
+    auth:
+      auth_url: "http://{{ ctlplane_vip }}:5000/"
+      username: "admin"
+      project_name: "admin"
+      user_domain_name: "Default"
+      password: "{{ keystone_admin_pass }}"
+    region_name: "RegionOne"
+    interface: "public"
+    identity_api_version: 3

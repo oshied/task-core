@@ -1,0 +1,46 @@
+id: neutron_metadata
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-neutron-metadata.init
+    requires:
+      - config.init
+    jobs:
+      - ARG: neutron_metadata_secret metadatasecrete
+      - QUERY: neutron_metadata_secret
+
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-neutron-metadata.setup
+    requires:
+      - openstack-neutron-metadata.init
+      - openstack-neutron.setup
+    jobs:
+      - DNF: openstack-neutron
+      - RUN: >-
+          crudini --set /etc/neutron/metadata_agent.ini DEFAULT debug True
+      - RUN: >-
+          crudini --set /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_host "{{ deployment_host }}"
+      - RUN: >-
+          crudini --set /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_protocol http
+      - RUN: >-
+          crudini --set /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret "{{ query.values() | map(attribute='neutron_metadata_secret') | select('defined') | list | first }}"
+      - RUN: >-
+          crudini --set /etc/neutron/metadata_agent.ini DEFAULT metadata_workers 2
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - openstack-neutron-metadata.service
+    requires:
+      - openstack-neutron.service
+    jobs:
+      - RUN: --skip-cache systemctl enable neutron-metadata-agent.service
+      - RUN: --skip-cache systemctl restart neutron-metadata-agent.service

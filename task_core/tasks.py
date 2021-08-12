@@ -67,22 +67,23 @@ class ServiceTask(BaseTask):
 
     def execute(self, *args, **kwargs) -> list:
         LOG.debug(
-            "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            "%s | task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            self,
             args,
             kwargs,
             self.hosts,
             self.data,
         )
-        LOG.info("Running %s", self)
+        LOG.info("%s | Running", self)
         for j in self.jobs:
             if "echo" in j:
                 LOG.info(j.get("echo"))
                 time.sleep(random.random())
             else:
-                LOG.info("Unknown action: %s", j)
+                LOG.info("%s | Unknown action: %s", self, j)
         # note: this return time needs to match the "provides" format type.
         # generally a list or dict
-        LOG.info("Completed %s", self)
+        LOG.info("%s | Completed", self)
         return [TaskResult(True, {})]
 
 
@@ -103,15 +104,17 @@ class DirectordTask(ServiceTask):
                 "directord libraries are unavailable. Please install directord."
             )
         LOG.debug(
-            "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            "%s directord execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            self,
             args,
             kwargs,
             self.hosts,
             self.data,
         )
-        LOG.info("Running %s", self)
+        LOG.info("%s | Running", self)
 
-        conn = DirectordConnect()
+        # TODO(mwhahaha): make this configurable @ task level
+        conn = DirectordConnect(force_async=True)
 
         try:
             jobs = conn.orchestrate(
@@ -119,34 +122,39 @@ class DirectordTask(ServiceTask):
                 defined_targets=self.hosts,
             )
         except Exception as e:
-            LOG.error("Exception while executing orcestrations, %s", e)
+            LOG.error("%s | Exception while executing orcestrations, %s", self, e)
             raise
 
-        LOG.debug("Pending jobs... %s", jobs)
+        LOG.debug("%s | Pending jobs... %s", self, jobs)
 
         pending = jobs
         success = []
-        failures = []
+        failure = []
         while len(pending) > 0:
             job = pending.pop(0)
-            LOG.debug("Waiting for job... %s", job)
+            LOG.debug("%s | Waiting for job... %s", self, job)
             status, info = conn.poll(job_id=job)
             if status is True:
                 success.append(job)
             elif status is False:
                 # TODO(mwhahaha): handle failures
-                LOG.error("Job %s failed. %s", job, info)
-                failures.append(job)
+                LOG.error("%s | Job %s failed. %s", self, job, info)
+                failure.append(job)
             else:
                 pending.append(job)
                 time.sleep(0.1)
 
-        LOG.info("Finished processing %s", self)
-        if failures:
+        LOG.info("%s | Finished processing", self)
+        # TODO(mwhahaha): I don't think we need to stop execution here
+        if failure:
             raise ExecutionFailed(
-                "Directord job execution failed {}".format(", ".join(failures))
+                "{} | Directord job execution failed {}".format(
+                    self, ", ".join(failure)
+                )
             )
-        return [TaskResult(not any(failures), {})]
+
+        results = dict(success=success, failure=failure)
+        return [TaskResult(not any(failure), results)]
 
 
 class PrintTask(BaseTask):
@@ -158,15 +166,16 @@ class PrintTask(BaseTask):
 
     def execute(self, *args, **kwargs) -> list:
         LOG.debug(
-            "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            "%s print execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            self,
             args,
             kwargs,
             self.hosts,
             self.data,
         )
-        LOG.info("Running %s", self)
+        LOG.info("%s | Running", self)
         LOG.info("PRINT: %s", self.message)
-        LOG.info("Completed %s", self)
+        LOG.info("%s | Completed", self)
         return [TaskResult(True, {})]
 
 
@@ -192,13 +201,14 @@ class AnsibleRunnerTask(BaseTask):
                 "install ansible-runner."
             )
         LOG.debug(
-            "ansible execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            "%s ansible execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            self,
             args,
             kwargs,
             self.hosts,
             self.data,
         )
-        LOG.info("Running %s", self)
+        LOG.info("%s | Running", self)
         runner = ansible_runner.run(
             private_data_dir=self.working_dir,
             playbook=self.playbook,
@@ -207,5 +217,5 @@ class AnsibleRunnerTask(BaseTask):
         data = {"stdout": runner.stdout, "stats": runner.stats}
         # https://ansible-runner.readthedocs.io/en/stable/python_interface.html#the-runner-object
         status = runner.rc == 0 and runner.status == "successful"
-        LOG.info("Completed %s", self)
+        LOG.info("%s | Completed", self)
         return [TaskResult(status, data)]

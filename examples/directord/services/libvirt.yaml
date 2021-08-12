@@ -1,0 +1,70 @@
+id: libvirt
+type: service
+version: 1.0.0
+tasks:
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - libvirt.setup
+    requires:
+      - repos.init
+    jobs:
+      - DNF: libvirt libvirt-daemon-kvm libvirt-daemon-driver-qemu
+      - RUN: >-
+          crudini --set /etc/libvirt/libvirtd.conf '' listen_tls 0
+      - RUN: >-
+          crudini --set /etc/libvirt/libvirtd.conf '' listen_tcp 0
+      - RUN: >-
+          crudini --set /etc/libvirt/libvirtd.conf '' unix_sock_group '"libvirt"'
+      - RUN: >-
+          crudini --set /etc/libvirt/libvirtd.conf '' unix_sock_ro_perms '"0777"'
+      - RUN: >-
+          crudini --set /etc/libvirt/libvirtd.conf '' unix_sock_rw_perms '"0770"'
+      - RUN: >-
+          crudini --set /etc/libvirt/libvirtd.conf '' auth_unix_ro '"none"'
+      - RUN: >-
+          crudini --set /etc/libvirt/libvirtd.conf '' auth_unix_rw '"none"'
+      - RUN: >-
+          crudini --set /etc/libvirt/libvirtd.conf '' log_filters '"1:libvirt 1:qemu 1:conf 1:security 3:event 3:json 3:file 3:object 1:util"'
+      - RUN: >-
+          crudini --set /etc/libvirt/libvirtd.conf '' log_outputs '"1:file:/var/log/libvirt/libvirtd.log"'
+      # virtlogd
+      - RUN: >-
+          crudini --set /etc/libvirt/virtlogd.conf '' log_filters '"1:libvirt 1:qemu 1:conf 1:security 3:event 3:json 3:file 3:object 1:util"'
+      - RUN: >-
+          crudini --set /etc/libvirt/virtlogd.conf '' log_outputs '"1:file:/var/log/libvirt/virtlogd.log"'
+      # qemu
+      - RUN: >-
+          crudini --set /etc/libvirt/qemu.conf '' max_files 32768
+      - RUN: >-
+          crudini --set /etc/libvirt/qemu.conf '' max_processes 131072
+      - RUN: >-
+          crudini --set /etc/libvirt/qemu.conf '' vnc_tls 0
+      - RUN: >-
+          crudini --set /etc/libvirt/qemu.conf '' vnc_tls_x509_verify 0
+      - RUN: >-
+          crudini --set /etc/libvirt/qemu.conf '' default_tls_x509_verify 1
+      - RUN: >-
+          crudini --set /etc/libvirt/qemu.conf '' nbd_tls 0
+      - RUN: >-
+          crudini --set /etc/libvirt/qemu.conf '' migration_port_min 61152
+      - RUN: >-
+          crudini --set /etc/libvirt/qemu.conf '' migration_port_max 61215
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - libvirt.service
+    requires:
+      - libvirt.setup
+    jobs:
+      - RUN: --skip-cache systemctl enable dbus.service
+      - RUN: --skip-cache systemctl start dbus.service
+      - RUN: --skip-cache systemctl enable virtlockd.service
+      - RUN: --skip-cache systemctl start virtlockd.service
+      - RUN: --skip-cache systemctl enable virtlogd.service
+      - RUN: --skip-cache systemctl start virtlogd.service
+      - RUN: --skip-cache systemctl enable libvirtd.service
+      - RUN: --skip-cache systemctl restart libvirtd.service

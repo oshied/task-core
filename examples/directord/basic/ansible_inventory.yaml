@@ -1,0 +1,36 @@
+all:
+  children:
+    undercloud:
+      hosts:
+        task-core-0: {}
+    controller:
+      hosts:
+        task-core-1: {}
+        task-core-2: {}
+        task-core-3: {}
+    novacompute:
+      hosts:
+        task-core-4: {}
+    overcloud:
+      hosts:
+        task-core-0: {}
+        task-core-1: {}
+        task-core-2: {}
+        task-core-4: {}
+  hosts:
+    task-core-0:
+      ansible_host: 10.98.0.2
+      ansible_user: stack
+    task-core-1:
+      ansible_host: 10.98.0.3
+      ansible_user: stack
+    task-core-2:
+      ansible_host: 10.98.0.4
+      ansible_user: stack
+    task-core-3:
+      ansible_host: 10.98.0.5
+      ansible_user: stack
+    task-core-4:
+      ansible_host: 10.98.0.6
+      ansible_user: stack
+

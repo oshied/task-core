@@ -1,0 +1,65 @@
+id: neutron_ovs_agent
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-neutron-ovs-agent.init
+    requires:
+      - openstack-neutron.setup
+    jobs:
+      - ARG: neutron_metadata_secret metadatasecrete
+      - QUERY: neutron_metadata_secret
+
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-neutron-ovs-agent.setup
+    requires:
+      - openstack-neutron-ovs-agent.init
+      - openstack-neutron.setup
+    jobs:
+      - DNF: openstack-neutron-openvswitch
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs bridge_mappings datacentre:br-ex
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs integration_bridge br-int
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs igmp_snooping_enable False
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs tunnel_bridge br-tun
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population False
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent arp_responder False
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent enable_distributed_routing False
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent drop_flows_on_start False
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent extensions qos
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent tunnel_csum False
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent tunnel_types vxlan
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent vxlan_udp_port 4789
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup firewall_driver iptables_hybrid
+
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - openstack-neutron-ovs-agent.service
+    requires:
+      - openstack-neutron.service
+    jobs:
+      - RUN: --skip-cache systemctl enable neutron-openvswitch-agent.service neutron-destroy-patch-ports.service
+      - RUN: --skip-cache systemctl restart neutron-openvswitch-agent.service neutron-destroy-patch-ports.service

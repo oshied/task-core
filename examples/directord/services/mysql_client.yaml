@@ -1,0 +1,18 @@
+id: mysql_client
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - mysql_client.init
+    requires:
+      - config.init
+      - repos.init
+    jobs:
+      - DNF: mariadb-connector-c-config
+      - ADD: >
+          --blueprint files/mysql_client/tripleo.cnf.j2 /etc/my.cnf.d/tripleo.cnf
+          --chown root
+

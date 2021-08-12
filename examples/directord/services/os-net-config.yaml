@@ -1,0 +1,27 @@
+id: os-net-config
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - network.init
+    # we need the hostname value for use int he config render
+    requires:
+      - config.init
+      - repos.init
+      - openvswitch.init
+      - tripleo_firewall.init
+    jobs:
+      - DNF: os-net-config
+      - ADD: >
+          --blueprint files/os-net-config/os-net-config.yaml.j2 /etc/os-net-config.yaml
+          --chown root
+      - RUN: os-net-config -c /etc/os-net-config.yaml
+      # TODO(mwhahaha): handle missing resolvers for now
+      - RUN: >-
+          {% for h in tripleo_dns_servers %}
+            grep -q "nameserver {{ h }}" /etc/resolv.conf || echo "nameserver {{ h }}" | tee -a /etc/resolv.conf;
+          {% endfor %}
+

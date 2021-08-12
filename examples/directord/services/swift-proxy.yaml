@@ -1,0 +1,160 @@
+id: swift_proxy
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-swift-proxy.init
+    requires:
+      - config.init
+      # provides mysql_root_password
+      - mariadb.init
+    jobs:
+      - ARG: swift_region RegionOne
+      - ARG: swift_admin_pass swift
+      - ARG: swift_hash_path_suffix Gb0pinPGbyl8YpRBI9d6eL5C3
+      - ARG: swift_hash_path_prefix ""
+
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-swift-proxy.setup
+    requires:
+      - config.init
+      - openstack-swift-proxy.init
+      - rabbitmq.config
+      - repos.init
+      - httpd.init
+    jobs:
+      - DNF: openstack-swift-proxy python3-swiftclient python3-keystoneclient python3-keystonemiddleware memcached
+      - RUN: >-
+          crudini --set /etc/swift/swift.conf swift-hash swift_hash_path_suffix "{{ swift_hash_path_suffix }}"
+      - RUN: >-
+          crudini --set /etc/swift/swift.conf swift-hash swift_hash_path_prefix "{{ swift_hash_path_prefix }}"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf DEFAULT bind_ip "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf DEFAULT log_level DEBUG
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "pipeline:main" pipeline "catch_errors gatekeeper healthcheck proxy-logging cache listing_formats ratelimit bulk tempurl formpost authtoken s3api s3token keystone staticweb copy container-quotas account-quotas slo dlo versioned_writes proxy-logging proxy-server"
+      # TODO(mwhahaha) memcached hosts
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:cache" memcache_servers "127.0.0.1:11211"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:cache" memcached_max_connections 2
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" auth_type password
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" user_domain_id default
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" project_name service
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" username swift
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" signing_dir /tmp/keystone-signing-swift
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" password "{{ swift_admin_pass }}"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" project_domain_id default
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" auth_url "http://{{ ctlplane_vip }}:5000"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" www_authenticate_uri "http://{{ ctlplane_vip }}:5000"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" region_name "{{ swift_region }}"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" include_service_catalog False
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" interface internal
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:authtoken" cache swift.cache
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:s3token" use "egg:swift#s3token"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:s3token" auth_uri "http://{{ ctlplane_vip }}:5000/v3"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:s3token" reseller_prefix "AUTH_"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:s3token" delay_auth_decision False
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:s3token" auth_version 3
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:copy" object_post_as_copy true
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:healthcheck" use "egg:swift#healthcheck"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:listing_formats" use "egg:swift#listing_formats"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:proxy-logging" use "egg:swift#proxy_logging"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:ratelimit" use "egg:swift#ratelimit"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:bulk" use "egg:swift#bulk"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:tempurl" use "egg:swift#tempurl"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:formpost" use "egg:swift#formpost"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:staticweb" use "egg:swift#staticweb"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:staticweb" urlbase "http://{{ ctlplane_vip }}:8080"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:container_quotas" use "egg:swift#container_quotas"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:catch_errors" use "egg:swift#catch_errors"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:encryption" use "egg:swift#encryption"
+      - RUN: >-
+          crudini --set /etc/swift/proxy-server.conf "filter:s3api" use "egg:swift#s3api"
+
+  - id: keystone
+    action: keystone
+    driver: directord
+    provides:
+      - openstack-swift-proxy.keystone
+    requires:
+      - openstack-keystone.cloud-config
+      - openstack-swift-proxy.init
+    jobs:
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud user create --or-show swift
+          --domain default --password "{{ swift_admin_pass }}"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud role add --project service --user swift admin
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud service show swift ||
+          openstack --os-cloud overcloud service create --name swift
+          --description "Swift" object-store
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface public --service swift | grep -q swift||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          swift public "http://{{ ctlplane_vip }}:8080/v1/AUTH_%(project_id)s"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface internal --service swift | grep -q swift||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          swift internal "http://{{ ctlplane_vip }}:8080/v1/AUTH_%(project_id)s"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface admin --service swift | grep -q swift||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          swift admin "http://{{ ctlplane_vip }}:8080/"
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - openstack-swift-proxy.service
+    requires:
+      - openstack-swift-proxy.keystone
+    jobs:
+      - RUN: --skip-cache systemctl enable openstack-swift-proxy.service
+      - RUN: --skip-cache systemctl restart openstack-swift-proxy.service
+#

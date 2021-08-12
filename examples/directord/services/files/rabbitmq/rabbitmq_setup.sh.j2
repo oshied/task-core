@@ -1,0 +1,26 @@
+#/bin/bash
+set -ex
+RABBIT_START_TIMEOUT=30
+if [ -s /var/lib/rabbitmq/.rabbitmq_bootstrap ]; then
+    echo "This node was the bootstrap node, skipping seutp"
+    exit 0
+fi
+
+if [ -f /var/lib/rabbitmq/.rabbitmq_setup ]; then
+    echo "This node was already setup."
+    exit 0
+fi
+
+systemctl start rabbitmq-server.service
+
+timeout ${RABBIT_START_TIMEOUT} /bin/bash -c "while ! rabbitmqctl status; do sleep 1; done"
+
+rabbitmqctl stop_app
+rabbitmqctl reset
+
+rabbitmqctl join_cluster "rabbit@{{ rabbitmq_bootstrap_node }}"
+
+rabbitmqctl start_app
+rabbitmqctl await_online_nodes {{ tripleo_rabbitmq_hosts | count }}
+
+touch /var/lib/rabbitmq/.rabbitmq_setup

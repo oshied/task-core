@@ -1,0 +1,41 @@
+id: memcached
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - memcached.init
+    requires:
+      - config.init
+      - repos.init
+    jobs:
+      - RUN: --stdout-arg memcache_host_ip echo -n "{{ tripleo_network_ips[deployment_host] }}"
+      - QUERY: memcache_host_ip
+
+  - id: setup
+    action: run
+    driver: directord
+    provides:
+      - memcached.setup
+    requires:
+      - memcached.init
+      - repos.init
+    jobs:
+      - DNF: memcached
+      - ADD: >
+          --blueprint files/memcached/memcached.j2 /etc/sysconfig/memcached
+          --chown root
+
+  - id: service
+    action: run
+    driver: directord
+    provides:
+      - memcached.service
+    requires:
+      - memcached.setup
+    jobs:
+      - RUN: --skip-cache systemctl enable memcached
+      - RUN: --skip-cache systemctl start memcached
+

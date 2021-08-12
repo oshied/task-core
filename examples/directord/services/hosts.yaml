@@ -1,0 +1,17 @@
+id: hosts
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - hosts.init
+    requires:
+      - config.init
+    jobs:
+      # TODO(mwhahaha): this should be dynamic rather than from config
+      - RUN: >-
+          {% for k, v in tripleo_network_ips.items() %}
+          grep "{{ k }}" /etc/hosts || (echo -e "{{ v }} {{ k }}" | tee -a /etc/hosts);
+          {% endfor %}

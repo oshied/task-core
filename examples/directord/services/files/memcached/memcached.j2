@@ -1,0 +1,5 @@
+PORT="11211"
+USER="memcached"
+MAXCONN="8192"
+CACHESIZE="7915"
+OPTIONS="-v -l 127.0.0.1,{{ tripleo_network_ips[deployment_host] }} -U 0 -X -t 4"

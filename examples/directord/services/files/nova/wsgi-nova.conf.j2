@@ -1,0 +1,29 @@
+Listen {{ tripleo_network_ips[deployment_host] }}:8774
+
+<VirtualHost {{ tripleo_network_ips[deployment_host] }}:8774>
+  ServerName {{ deployment_host }}
+
+  ## Vhost docroot
+  DocumentRoot "/var/www/cgi-bin/nova"
+
+  ## Directories, there should at least be a declaration for /var/www/cgi-bin/nova
+
+  <Directory "/var/www/cgi-bin/nova">
+    Options -Indexes +FollowSymLinks +MultiViews
+    AllowOverride None
+    Require all granted
+  </Directory>
+
+  ## Logging
+  ErrorLog "/var/log/httpd/nova_api_wsgi_error.log"
+  ServerSignature Off
+  CustomLog "/var/log/httpd/nova_api_wsgi_access.log" combined 
+  SetEnvIf X-Forwarded-Proto https HTTPS=1
+
+  ## WSGI configuration
+  WSGIApplicationGroup %{GLOBAL}
+  WSGIDaemonProcess nova-api display-name=nova_api_wsgi group=nova processes=2 threads=1 user=nova
+  WSGIProcessGroup nova-api
+  WSGIScriptAlias / "/var/www/cgi-bin/nova/nova-api"
+</VirtualHost>
+

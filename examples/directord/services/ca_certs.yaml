@@ -1,0 +1,16 @@
+id: ca_certs
+type: service
+version: 1.0.0
+tasks:
+  - id: ca_certs
+    action: run
+    driver: directord
+    provides:
+      - ca_certs.init
+    requires:
+      - config.init
+    jobs:
+      - ADD: >
+          --blueprint files/ca_certs/ca_certs.j2 /etc/pki/ca-trust/source/anchors/tripleo.pem
+          --chown root
+      - RUN: update-ca-trust extract

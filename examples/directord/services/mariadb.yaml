@@ -2,18 +2,72 @@ id: mariadb
 type: service
 version: 1.0.0
 tasks:
-  - id: setup
+  - id: init
     action: run
     driver: directord
     provides:
       - mariadb.init
     requires:
-      - repos.init
+      - config.init
+      - mysql_client.init
     jobs:
       - ARG: mysql_root_password SuperSecrete
       - RUN: --stdout-arg director_hostname hostname
-      - RUN: --skip-cache dnf -y install mariadb mariadb-server
+      - DNF: mariadb mariadb-server
+      - RUN: >-
+          crudini --set /etc/my.cnf.d/mariadb-server.cnf server skip-name-resolve 1
+      - ADD: >
+          --blueprint files/mariadb/mariadb_bootstrap.sh.j2 /var/lib/mysql/mariadb_bootstrap.sh
+          --chown root
+          --chmod 0700
+      - RUN: bash /var/lib/mysql/mariadb_bootstrap.sh
+
+
+  - id: galera
+    action: run
+    driver: directord
+    provides:
+      - mariadb.galera
+    requires:
+      - config.init
+      - mariadb.init
+      - keepalived.init
+    jobs:
+      - DNF: mariadb-server-galera rsync crudini xinetd
+      - RUN: >-
+          crudini --set /etc/my.cnf.d/galera.cnf mysqld wsrep_on ON
+      - RUN: >-
+          crudini --set /etc/my.cnf.d/galera.cnf mysqld bind-address "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/my.cnf.d/galera.cnf mysqld wsrep_cluster_address "gcomm://{{ tripleo_cluster_addresses | join(',') }}"
+      - RUN: >-
+          crudini --set /etc/my.cnf.d/galera.cnf mysqld wsrep_node_address "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/my.cnf.d/galera.cnf mysqld wsrep_node_name "{{ deployment_host }}"
+      - ADD: >
+          --blueprint files/mariadb/clustercheck.j2 /etc/xinetd.d/clustercheck
+          --chown root
+          --chmod 0700
+      - RUN: systemctl enable xinetd.service
+      - RUN: systemctl restart xinetd.service
+      - RUN: --run-once galera_new_cluster
+
+  - id: start
+    action: run
+    driver: directord
+    provides:
+      - mariadb.start
+    requires:
+      - mariadb.galera
+    jobs:
       - RUN: systemctl enable mariadb.service
       - RUN: systemctl start mariadb.service
-      - RUN: mysql -e "UPDATE mysql.user SET Password = PASSWORD('{{ mysql_root_password }}') WHERE User = 'root'"
-      - RUN: mysql -e "FLUSH PRIVILEGES"
+#
+#  - id: available
+#    action: run
+#    driver: directord
+#    providers:
+#      - mariadb.available
+#    requires:
+#      - mariadb.staart
+#      - RUN:

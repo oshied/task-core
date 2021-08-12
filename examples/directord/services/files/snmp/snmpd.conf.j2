@@ -1,0 +1,75 @@
+###
+### File managed by Puppet
+###
+
+################################################################################
+# AGENT BEHAVIOUR
+
+
+agentaddress udp:161,udp6:[::1]:161
+
+################################################################################
+# ACCESS CONTROL
+
+# ------------------------------------------------------------------------------
+# Traditional Access Control
+rocommunity public 127.0.0.1
+rocommunity6 public ::1
+
+# ------------------------------------------------------------------------------
+# VACM Configuration
+#       sec.name       source        community
+com2sec notConfigUser  default       public
+
+com2sec6 notConfigUser  default       public
+
+#       groupName      securityModel securityName
+group   notConfigGroup v1            notConfigUser
+group   notConfigGroup v2c           notConfigUser
+
+#       group          context sec.model sec.level prefix read       write notif
+access  notConfigGroup ""      any       noauth    exact  systemview none  none
+#       name          incl/excl  subtree             mask(optional)
+view    systemview    included   .1.3.6.1.2.1.1
+view    systemview    included   .1.3.6.1.2.1.25.1.1
+# ------------------------------------------------------------------------------
+# Typed-View Configuration
+
+################################################################################
+# SYSTEM INFORMATION
+
+# ------------------------------------------------------------------------------
+# System Group
+sysLocation Unknown
+sysContact Unknown
+sysServices 72
+sysName overcloud-novacompute-0.localdomain
+
+################################################################################
+# EXTENDING AGENT FUNCTIONALITY
+
+
+
+
+###############################################################################
+## Logging
+##
+
+## We do not want annoying "Connection from UDP: " messages in syslog.
+## If the following option is set to 'no', snmpd will print each incoming
+## connection, which can be useful for debugging.
+
+dontLogTCPWrappersConnects no
+
+################################################################################
+# OTHER CONFIGURATION
+
+createUser ro_snmp_user MD5 "BFuWATuNrSUyCwhOekF76Ohi"
+rouser ro_snmp_user
+proc  cron
+includeAllDisks  10%
+master agentx
+iquerySecName internalUser
+rouser internalUser
+defaultMonitors yes
+linkUpDownNotifications yes

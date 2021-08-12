@@ -1,0 +1,125 @@
+id: placement
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-placement.init
+    requires:
+      - config.init
+      # provides mysql_root_password
+      - mariadb.init
+    jobs:
+      - ARG: placement_region RegionOne
+      - ARG: placement_db_username placement
+      - ARG: placement_db_password secrete
+      - RUN: --stdout-arg placement_db_host echo "{{ ctlplane_vip }}"
+      - ARG: placement_db_name placement
+      - ARG: placement_admin_pass placement
+
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-placement.setup
+    requires:
+      - config.init
+      - openstack-placement.init
+      - repos.init
+      - httpd.init
+    jobs:
+      - DNF: openstack-placement-api
+      - RUN: echo "# file managed elsewhere" > /etc/httpd/conf.d/00-placement-api.conf
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf placement_database connection
+          "mysql+pymysql://{{ placement_db_username }}:{{ placement_db_password }}@{{ placement_db_host }}/{{ placement_db_name }}?read_default_file=/etc/my.cnf.d/tripleo.cnf&read_default_group=tripleo"
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf api auth_strategy keystone
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf keystone_authtoken auth_url "http://{{ ctlplane_vip }}:5000"
+      # TODO(mwhahaha) memcached hosts
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf keystone_authtoken memcached_server "127.0.0.1:11211"
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf keystone_authtoken auth_type password
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf keystone_authtoken project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf keystone_authtoken user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf keystone_authtoken project_name service
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf keystone_authtoken username placement
+      - RUN: >-
+          crudini --set /etc/placement/placement.conf keystone_authtoken password "{{ placement_admin_pass }}"
+      - WORKDIR: --chown placement /var/www/cgi-bin/placement
+      - RUN: cp /usr/bin/placement-api /var/www/cgi-bin/placement/placement-api
+      - ADD: >
+          --blueprint files/placement/wsgi-placement.conf.j2
+          /etc/httpd/conf.d/wsgi-placement.conf
+
+  - id: keystone
+    action: keystone
+    driver: directord
+    provides:
+      - openstack-placement.keystone
+    requires:
+      - openstack-keystone.cloud-config
+      - openstack-placement.init
+    jobs:
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud user create --or-show placement
+          --domain default --password "{{ placement_admin_pass }}"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud role add --project service --user placement admin
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud service show placement ||
+          openstack --os-cloud overcloud service create --name placement
+          --description "Placement API" placement
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface public --service placement | grep -q placement ||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          placement public "http://{{ ctlplane_vip }}:8778/placement"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface internal --service placement | grep -q placement ||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          placement internal "http://{{ ctlplane_vip }}:8778/placement"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface admin --service placement | grep -q placement ||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          placement admin "http://{{ ctlplane_vip }}:8778/placement"
+
+  - id: database
+    action: database
+    driver: directord
+    provides:
+      - openstack-placement.database
+    requires:
+      - openstack-placement.setup
+      - mariadb.start
+    jobs:
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "CREATE DATABASE IF NOT EXISTS placement;"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON placement.* TO 'placement'@'%' IDENTIFIED BY '{{ placement_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON placement.* TO 'placement'@'localhost' IDENTIFIED BY '{{ placement_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "FLUSH PRIVILEGES;"
+      - RUN: --run-once placement-manage db sync
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - openstack-placement.service
+    requires:
+      - openstack-placement.database
+      - openstack-placement.keystone
+    jobs:
+      - RUN: --skip-cache systemctl reload httpd.service
+#

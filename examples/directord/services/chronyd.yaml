@@ -7,8 +7,10 @@ tasks:
     driver: directord
     provides:
       - chronyd.init
+    requires:
+      - repos.init
     jobs:
-      - RUN: dnf -y install chrony crudini
+      - DNF: chrony crudini
       - RUN: systemctl start chronyd
       - RUN: systemctl enable chronyd
 

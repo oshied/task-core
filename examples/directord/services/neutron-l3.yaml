@@ -1,0 +1,34 @@
+id: neutron_l3
+type: service
+version: 1.0.0
+tasks:
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-neutron-l3.setup
+    requires:
+      - openstack-neutron.setup
+    jobs:
+      - DNF: openstack-neutron
+      - RUN: >-
+          crudini --set /etc/neutron/l3_agent.ini DEFAULT debug True
+      - RUN: >-
+          crudini --set /etc/neutron/l3_agent.ini DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+      - RUN: >-
+          crudini --set /etc/neutron/l3_agent.ini DEFAULT agent_mode legacy
+      - RUN: >-
+          crudini --set /etc/neutron/l3_agent.ini DEFAULT radvd_user root
+      - RUN: >-
+          crudini --set /etc/neutron/l3_agent.ini agent extensions port_forwarding
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - openstack-neutron-l3.service
+    requires:
+      - openstack-neutron.service
+    jobs:
+      - RUN: --skip-cache systemctl enable neutron-l3-agent.service
+      - RUN: --skip-cache systemctl restart neutron-l3-agent.service

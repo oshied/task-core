@@ -20,20 +20,19 @@
 ## For example, to listen only on localhost for both IPv4 and IPv6:
 ##
 # IPv4
-# listeners.tcp.local    = 127.0.0.1:5672
+listeners.tcp.local    = {{ tripleo_network_ips[deployment_host] }}:{{ rabbitmq_tcp_port | int }}
 # IPv6
 # listeners.tcp.local_v6 = ::1:5672
 
 ## You can define multiple listeners using listener names
 # listeners.tcp.other_port = 5673
 # listeners.tcp.other_ip   = 10.10.10.10:5672
-listeners.tcp.other_ip = {{ rabbitmq_management_bind_address }}:{{ rabbitmq_tcp_port | int }}
 
 ## TLS listeners are configured in the same fashion as TCP listeners,
 ## including the option to control the choice of interface.
 ##
 # listeners.ssl.default = 5671
-listeners.ssl.other_ip = {{ rabbitmq_management_bind_address }}:{{ rabbitmq_ssl_port | int }}
+# listeners.ssl.other_ip = 0.0.0.0:5673
 
 ## Number of Erlang processes that will accept connections for the TCP
 ## and TLS listeners.
@@ -75,7 +74,7 @@ listeners.ssl.other_ip = {{ rabbitmq_management_bind_address }}:{{ rabbitmq_ssl_
 
 ## Uncomment the following line if you want to allow access to the
 ## guest user from anywhere on the network.
-# loopback_users.guest = false
+loopback_users.guest = false
 
 ## TLS configuration.
 ##
@@ -210,7 +209,7 @@ listeners.ssl.other_ip = {{ rabbitmq_management_bind_address }}:{{ rabbitmq_ssl_
 
 ## Cluster name
 ##
-# cluster_name = dev3.eng.megacorp.local
+cluster_name = {{ rabbitmq_cluster_name }}
 
 ## Password hashing implementation. Will only affect newly
 ## created users. To recalculate hash for an existing user
@@ -236,8 +235,8 @@ listeners.ssl.other_ip = {{ rabbitmq_management_bind_address }}:{{ rabbitmq_ssl_
 ## Relevant doc guide: https://rabbitmq.com/access-control.html
 ##
 # default_vhost = /
-# default_user = guest
-# default_pass = guest
+default_user = {{ rabbitmq_default_user }}
+default_pass = {{ rabbitmq_default_pass }}
 
 # default_permissions.configure = .*
 # default_permissions.read = .*
@@ -289,11 +288,11 @@ listeners.ssl.other_ip = {{ rabbitmq_management_bind_address }}:{{ rabbitmq_ssl_
 ## * https://www.erlang.org/doc/man/inet.html#setopts-2
 ##
 
-# tcp_listen_options.backlog = 128
-# tcp_listen_options.nodelay = true
-# tcp_listen_options.exit_on_close = false
+tcp_listen_options.backlog = 4096
+tcp_listen_options.nodelay = true
+tcp_listen_options.exit_on_close = false
 #
-# tcp_listen_options.keepalive = true
+tcp_listen_options.keepalive = true
 # tcp_listen_options.send_timeout = 15000
 #
 # tcp_listen_options.buffer = 196608
@@ -384,6 +383,7 @@ vm_memory_high_watermark.relative = {{ rabbitmq_memory_high_watermark }}
 ## =====================
 ##
 cluster_partition_handling = {{ rabbitmq_cluster_partition_handling }}
+queue_master_locator = {{ rabbitmq_queue_master_locator }}
 
 ## pause_if_all_down strategy require additional configuration
 # cluster_partition_handling = pause_if_all_down
@@ -407,8 +407,13 @@ cluster_partition_handling = {{ rabbitmq_cluster_partition_handling }}
 ## Relevant doc guide: https://rabbitmq.com//cluster-formation.html
 ##
 
-# cluster_formation.peer_discovery_backend     = rabbit_peer_discovery_classic_config
+#cluster_formation.peer_discovery_backend     = rabbit_peer_discovery_classic_config
 #
+{%- set counter = 1 %}
+{%- for k in tripleo_rabbitmq_hosts %}
+#cluster_formation.classic_config.nodes.{{ counter }} = rabbit@{{ k }}
+{%- set counter = counter + 1 %}
+{%- endfor %}
 # cluster_formation.classic_config.nodes.1 = rabbit1@hostname
 # cluster_formation.classic_config.nodes.2 = rabbit2@hostname
 # cluster_formation.classic_config.nodes.3 = rabbit3@hostname
@@ -545,7 +550,7 @@ collect_statistics_interval = {{ rabbitmq_collect_statistics_interval }}
 ## Timeout used to detect peer unavailability, including CLI tools.
 ## Related doc guide: https://www.rabbitmq.com/nettick.html.
 ##
-# net_ticktime = 60
+net_ticktime = {{ rabbitmq_net_ticktime }}
 
 ## Inter-node communication port range.
 ## The parameters inet_dist_listen_min and inet_dist_listen_max
@@ -575,8 +580,8 @@ collect_statistics_interval = {{ rabbitmq_collect_statistics_interval }}
 ## HTTP listener and embedded Web server settings.
 # ## See https://rabbitmq.com/management.html for details.
 #
-# management.tcp.port = 15672
-# management.tcp.ip   = 0.0.0.0
+management.tcp.port = 15672
+management.tcp.ip   = {{ rabbitmq_management_bind_address }}
 #
 # management.tcp.shutdown_timeout   = 7000
 # management.tcp.max_keepalive      = 120
@@ -619,7 +624,7 @@ collect_statistics_interval = {{ rabbitmq_collect_statistics_interval }}
 
 ## One of 'basic', 'detailed' or 'none'. See
 ## https://rabbitmq.com/management.html#fine-stats for more details.
-# management.rates_mode = basic
+management.rates_mode = {{ rabbitmq_management_rates_mode}}
 
 ## Configure how long aggregated data (such as message rates and queue
 ## lengths) is retained. Please read the plugin's documentation in
@@ -683,11 +688,9 @@ collect_statistics_interval = {{ rabbitmq_collect_statistics_interval }}
 #
 # ssl_options.cacertfile = path/to/cacert.pem
 # ssl_options.certfile   = path/to/cert.pem
-ssl_options.certfile   = {{ rabbitmq_ssl_cert }}
 # ssl_options.keyfile    = path/to/key.pem
-ssl_options.keyfile    = {{ rabbitmq_ssl_key }}
-ssl_options.verify     =  verify_none
-ssl_options.fail_if_no_peer_cert = false
+# ssl_options.verify     =  verify_none
+# ssl_options.fail_if_no_peer_cert = false
 
 
 ## Number of Erlang processes that will accept connections for the TCP

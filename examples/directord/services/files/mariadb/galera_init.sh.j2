@@ -1,0 +1,15 @@
+#!/bin/bash
+set -ex
+
+if [ -f /etc/my.cnf.d/.galera_configured ]; then
+    echo "Galera already configured"
+    exit 0
+fi
+
+crudini --set /etc/my.cnf.d/galera.cnf mysqld wsrep_on ON
+crudini --set /etc/my.cnf.d/galera.cnf mysqld bind-address "{{tripleo_network_ips[deployment_host] }}"
+crudini --set /etc/my.cnf.d/galera.cnf mysqld wsrep_cluster_address "gcomm://{{ tripleo_cluster_addresses | join(',') }}"
+crudini --set /etc/my.cnf.d/galera.cnf mysqld wsrep_node_address "{{tripleo_network_ips[deployment_host] }}"
+crudini --set /etc/my.cnf.d/galera.cnf mysqld wsrep_node_name "{{ deployment_host }}"
+
+touch -f /etc/my.cnf.d/.galera_configured

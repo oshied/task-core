@@ -1,0 +1,13 @@
+id: timezone
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - timezone.init
+    requires:
+      - config.init
+    jobs:
+      - RUN: timedatectl set-timezone UTC

@@ -1,0 +1,20 @@
+id: httpd
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - httpd.init
+    requires:
+      - config.init
+    jobs:
+      - DNF: httpd python3-mod_wsgi
+      - RUN: >-
+          sed -i
+            -e "s/^Listen 80/Listen 127.0.0.1:80/"
+            -e "s/^#ServerName.*/ServerName {{ deployment_host }}/g"
+            /etc/httpd/conf/httpd.conf
+      - RUN: systemctl start httpd.service
+      - RUN: systemctl enable httpd.service

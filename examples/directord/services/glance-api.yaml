@@ -1,0 +1,169 @@
+id: glance_api
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-glance.init
+    requires:
+      - config.init
+      # provides mysql_root_password
+      - mariadb.init
+      - rabbitmq.config
+    jobs:
+      - ARG: glance_region RegionOne
+      - ARG: glance_db_username glance
+      - ARG: glance_db_password secrete
+      - RUN: --stdout-arg glance_db_host echo "{{ ctlplane_vip }}"
+      - ARG: glance_db_name glance
+      - ARG: glance_admin_pass glance
+      - QUERY: rabbitmq_transport_url
+
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-glance.setup
+    requires:
+      - config.init
+      - openstack-glance.init
+      - repos.init
+    jobs:
+      - DNF: openstack-glance
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf DEFAULT bind_host "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf DEFAULT bind_port 9292
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf DEFAULT enabled_backends "default_backend:swift"
+      - WORKDIR: --chown glance /var/lib/glance/image-cache
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf DEFAULT image_cache_dir "/var/lib/glance/image-cache"
+      - RUN: >-
+          crudini --set /etc/glance/glance-cache.conf DEFAULT image_cache_dir /var/lib/glance/image-cache
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | list | first }}"
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf glance_store default_backend "default_backend"
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf database connection
+          "mysql+pymysql://{{ glance_db_username }}:{{ glance_db_password }}@{{ glance_db_host }}/{{ glance_db_name }}?read_default_file=/etc/my.cnf.d/tripleo.cnf&read_default_group=tripleo"
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf paste_deploy flavor keystone
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf oslo_middleware enable_proxy_headers_parsing=True
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf keystone_authtoken auth_url "http://{{ ctlplane_vip }}:5000"
+      # TODO(mwhahaha) memcached hosts
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf keystone_authtoken memcached_server "127.0.0.1:11211"
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf keystone_authtoken auth_type password
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf keystone_authtoken project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf keystone_authtoken user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf keystone_authtoken project_name service
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf keystone_authtoken username glance
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf keystone_authtoken password "{{ glance_admin_pass }}"
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf oslo_concurrency lock_path /var/lib/glance/tmp
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf default_backend swift_store_create_container_on_put True
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf default_backend swift_store_endpoint_type internalURL
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf default_backend swift_store_config_file /etc/glance/glance-swift.conf
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf default_backend default_swift_reference refi
+      - RUN: >-
+          crudini --set /etc/glance/glance-api.conf default_backend store_description=swift
+      - RUN: >-
+          crudini --set /etc/glance/glance-swift.conf refi user service:glance
+      - RUN: >-
+          crudini --set /etc/glance/glance-swift.conf refi key "{{ glance_admin_pass }}"
+      - RUN: >-
+          crudini --set /etc/glance/glance-swift.conf refi auth_address "http://{{ ctlplane_vip }}:5000/v3"
+      - RUN: >-
+          crudini --set /etc/glance/glance-swift.conf refi auth_version 3
+      - RUN: >-
+          crudini --set /etc/glance/glance-swift.conf refi project_domain_id Default
+      - RUN: >-
+          crudini --set /etc/glance/glance-swift.conf refi user_domain_id Default
+      - RUN: >-
+          crudini --set /etc/glance/glance-image-import.conf image_conversation output_format raw
+      - RUN: >-
+          crudini --set /etc/glance/glance-image-import.conf image_import_ops image_import_plugins "[no_op]"
+      - RUN: >-
+          crudini --set /etc/glance/glance-image-import.conf inject_metadata_properties ignore_user_roles admin
+
+  - id: keystone
+    action: keystone
+    driver: directord
+    provides:
+      - openstack-glance.keystone
+    requires:
+      - openstack-keystone.cloud-config
+      - openstack-glance.init
+    jobs:
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud user create --or-show glance
+          --domain default --password "{{ glance_admin_pass }}"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud role add --project service --user glance admin
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud service show glance ||
+          openstack --os-cloud overcloud service create --name glance
+          --description "Glance API" image
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface public --service glance | grep -q glance||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          glance public "http://{{ ctlplane_vip }}:9292"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface internal --service glance | grep -q glance||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          glance internal "http://{{ ctlplane_vip }}:9292"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface admin --service glance | grep -q glance||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          glance admin "http://{{ ctlplane_vip }}:9292"
+
+  - id: database
+    action: database
+    driver: directord
+    provides:
+      - openstack-glance.database
+    requires:
+      - openstack-glance.setup
+      - mariadb.start
+    jobs:
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "CREATE DATABASE IF NOT EXISTS glance;"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' IDENTIFIED BY '{{ glance_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' IDENTIFIED BY '{{ glance_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "FLUSH PRIVILEGES;"
+      - RUN: --run-once glance-manage db sync
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - openstack-glance.service
+    requires:
+      - openstack-glance.database
+      - openstack-glance.keystone
+    jobs:
+      - RUN: --skip-cache systemctl enable openstack-glance-api.service
+      # NOTE(mwhahaha): glance isn't wsgi ?!@
+      - RUN: --skip-cache systemctl restart openstack-glance-api.service
+#

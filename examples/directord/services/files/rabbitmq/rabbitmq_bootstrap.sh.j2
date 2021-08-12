@@ -1,0 +1,13 @@
+#/bin/bash
+set -ex
+RABBIT_START_TIMEOUT=30
+if [ -f /var/lib/rabbitmq/.rabbitmq_bootstrap ]; then
+    cat /var/lib/rabbitmq/.rabbitmq_bootstrap
+    exit 0
+fi
+
+systemctl start rabbitmq-server.service
+
+timeout ${RABBIT_START_TIMEOUT} /bin/bash -c "while ! rabbitmqctl status; do sleep 1; done"
+
+echo "$(hostname -f)" > /var/lib/rabbitmq/.rabbitmq_bootstrap

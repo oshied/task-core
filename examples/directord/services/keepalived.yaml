@@ -1,0 +1,21 @@
+id: keepalived
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - keepalived.init
+    requires:
+      - config.init
+      - repos.init
+      - network.init
+    jobs:
+      - DNF: keepalived
+      - ADD: >
+          --blueprint files/keepalived/keepalived.conf.j2 /etc/keepalived/keepalived.conf
+          --chown root
+      - RUN: systemctl enable keepalived
+      - RUN: --skip-cache systemctl restart keepalived
+

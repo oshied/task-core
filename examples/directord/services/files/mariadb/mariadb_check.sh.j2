@@ -1,0 +1,5 @@
+#/bin/bash
+DB_MAX_TIMEOUT=30
+set -ex
+# spawn mysql for securing
+timeout ${DB_MAX_TIMEOUT} /bin/bash -c "until mysqladmin -uroot ping 2>/dev/null; do sleep 1; done"

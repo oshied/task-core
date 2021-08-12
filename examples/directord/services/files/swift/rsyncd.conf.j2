@@ -1,0 +1,43 @@
+uid = nobody
+gid = nobody
+use chroot = no
+log format = %t %a %m %f %b
+syslog facility = local3
+timeout = 300
+address = {{ tripleo_network_ips[deployment_host] }}
+[account]
+path               = /srv/node
+read only          = false
+write only         = no
+list               = yes
+uid                = swift
+gid                = swift
+incoming chmod     = Du=rwx,g=rx,o=rx,Fu=rw,g=r,o=r
+outgoing chmod     = Du=rwx,g=rx,o=rx,Fu=rw,g=r,o=r
+max connections    = 25
+timeout            = 0
+lock file          = /var/lock/account.lock
+[container]
+path               = /srv/node
+read only          = false
+write only         = no
+list               = yes
+uid                = swift
+gid                = swift
+incoming chmod     = Du=rwx,g=rx,o=rx,Fu=rw,g=r,o=r
+outgoing chmod     = Du=rwx,g=rx,o=rx,Fu=rw,g=r,o=r
+max connections    = 25
+timeout            = 0
+lock file          = /var/lock/container.lock
+[object]
+path               = /srv/node
+read only          = false
+write only         = no
+list               = yes
+uid                = swift
+gid                = swift
+incoming chmod     = Du=rwx,g=rx,o=rx,Fu=rw,g=r,o=r
+outgoing chmod     = Du=rwx,g=rx,o=rx,Fu=rw,g=r,o=r
+max connections    = 25
+timeout            = 0
+lock file          = /var/lock/object.lock

@@ -1,0 +1,16 @@
+service mysqlchk
+{
+        disable = no
+        flags = REUSE
+        socket_type = stream
+        type = UNLISTED
+        port = 9200
+        wait = no
+        user = mysql
+        env = MYSQL_HOST={{tripleo_network_ips[deployment_host] }}
+        server = /usr/bin/clustercheck
+        log_type       = FILE /var/log/mariadb/xinetd.log
+        log_on_failure = HOST ATTEMPT
+        per_source = UNLIMITED
+}
+

@@ -1,0 +1,266 @@
+id: neutron_api
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-neutron.init
+    requires:
+      - config.init
+      # provides mysql_root_password
+      - mariadb.init
+      - rabbitmq.config
+    jobs:
+      - ARG: neutron_region RegionOne
+      - ARG: neutron_db_username neutron
+      - ARG: neutron_db_password secrete
+      - RUN: --stdout-arg neutron_db_host echo "{{ ctlplane_vip }}"
+      - ARG: neutron_db_name neutron
+      - ARG: neutron_admin_pass neutron
+      - QUERY: rabbitmq_transport_url
+
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-neutron.setup
+    requires:
+      - config.init
+      - openstack-neutron.init
+      - openstack-nova.init
+      - openstack-placement.init
+      - repos.init
+    jobs:
+      - DNF: openstack-neutron
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT debug True
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT bind_host "{{ tripleo_network_ips[deployment_host] }}"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT bind_port 9696
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | list | first }}"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT auth_strategy keystone
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT core_plugin ml2
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT control_exchange neutron
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 1
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT dhcp_agent_notification True
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT global_physnet_mtu 1500
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT vlan_transparent False
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT service_plugins router,qos,segments,trunk,port_forwarding
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT l3_ha False
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT max_l3_agents_per_router 3
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT api_workers 2
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT rpc_workers 2
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT router_scheduler_driver neutron.scheduler.l3_agent_scheduler.ChanceScheduler
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT router_distributed False
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT enable_dvr False
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf DEFAULT allow_automatic_l3agent_failover True
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf database connection
+          "mysql+pymysql://{{ neutron_db_username }}:{{ neutron_db_password }}@{{ neutron_db_host }}/{{ neutron_db_name }}?read_default_file=/etc/my.cnf.d/tripleo.cnf&read_default_group=tripleo"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf database max_retries -1
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf database db_max_retries -1
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf paste_deploy flavor keystone
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf oslo_middleware enable_proxy_headers_parsing True
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken auth_url "http://{{ ctlplane_vip }}:5000"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken www_authenticate_uri "http://{{ ctlplane_vip }}:5000"
+      # TODO(mwhahaha) memcached hosts, also memcache_use_advanced_pool=True?
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken memcached_server "127.0.0.1:11211"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken auth_type password
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken project_name service
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken username neutron
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken password "{{ neutron_admin_pass }}"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf oslo_concurrency lock_path "\$state_path/lock"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf oslo_messaging_rabbit heartbeat_timeout_threshold 60
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf agent root_helper "sudo neutron-rootwrap /etc/neutron/rootwrap.conf"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf agent report_interval 300
+      # nova bits
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf nova auth_url "http://{{ ctlplane_vip }}:5000"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf nova auth_type password
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf nova project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf nova user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf nova project_name service
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf nova username nova
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf nova password "{{ nova_admin_pass }}"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf nova endpoint_type internal
+      # placement bits
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf placement auth_url "http://{{ ctlplane_vip }}:5000"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf placement auth_type password
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf placement project_domain_name Default
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf placement user_domain_name Default
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf placement project_name service
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf placement username placement
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf placement password "{{ placement_admin_pass }}"
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf placement endpoint_type internal
+      # ovs
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf ovs igmp_snooping_enabled False
+      # quotas
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf quotas quota_port 500
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf quotas quota_security_group 10
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf quotas quota_network_gateway 5
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf quotas quota_packet_filter 100
+
+  - id: plugin-setup
+    action: plugin-setup
+    driver: directord
+    provides:
+      - openstack-neutron.plugin-setup
+    requires:
+      - openstack-neutron.setup
+    jobs:
+      - DNF: openstack-neutron-ml2
+      - RUN: >-
+          ln -sf /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf quotas quota_packet_filter 100
+      - RUN: >-
+          crudini --set /etc/neutron/neutron.conf quotas quota_packet_filter 100
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers vxlan,vlan,flat,gre
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types vxlan
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers openvswitch
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 path_mtu 0
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers qos,port_security
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group 224.0.0.1
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges 1:65536
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vlan network_vlan_ranges datacentre:1:1000
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks datacentre
+      - RUN: >-
+          crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_gre tunnel_id_ranges 1:4094
+
+
+  - id: keystone
+    action: keystone
+    driver: directord
+    provides:
+      - openstack-neutron.keystone
+    requires:
+      - openstack-keystone.cloud-config
+      - openstack-neutron.init
+    jobs:
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud user create --or-show neutron
+          --domain default --password "{{ neutron_admin_pass }}"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud role add --project service --user neutron admin
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud service show neutron ||
+          openstack --os-cloud overcloud service create --name neutron
+          --description "Neutron API" network
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface public --service neutron | grep -q neutron||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          neutron public "http://{{ ctlplane_vip }}:9696"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface internal --service neutron | grep -q neutron||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          neutron internal "http://{{ ctlplane_vip }}:9696"
+      - RUN: >
+          --run-once
+          openstack --os-cloud overcloud endpoint list --interface admin --service neutron | grep -q neutron||
+          openstack --os-cloud overcloud endpoint create --region RegionOne
+          neutron admin "http://{{ ctlplane_vip }}:9696"
+
+  - id: database
+    action: database
+    driver: directord
+    provides:
+      - openstack-neutron.database
+    requires:
+      - openstack-neutron.setup
+      - openstack-neutron.plugin-setup
+      - openstack-neutron-l3.setup
+      - openstack-neutron-dhcp.setup
+      - openstack-neutron-metadata.setup
+      - openstack-neutron-ovs-agent.setup
+      - mariadb.start
+    jobs:
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "CREATE DATABASE IF NOT EXISTS neutron;"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' IDENTIFIED BY '{{ neutron_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' IDENTIFIED BY '{{ neutron_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "FLUSH PRIVILEGES;"
+      - RUN: --run-once neutron-db-manage upgrade heads
+
+  - id: service
+    action: service
+    driver: directord
+    provides:
+      - openstack-neutron.service
+    requires:
+      - openstack-neutron.database
+      - openstack-neutron.keystone
+    jobs:
+      - RUN: --skip-cache systemctl enable neutron-server.service
+      - RUN: --skip-cache systemctl restart neutron-server.service

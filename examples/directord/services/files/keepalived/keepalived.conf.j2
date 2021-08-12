@@ -1,0 +1,15 @@
+vrrp_instance ctlplane_vip {
+    state {{ tripleo_keepalived['state'][deployment_host] | default('MASTER') }}
+    interface {{ tripleo_keepalived['interface'][deployment_host] | default ('ens3') }}
+    dont_track_primary
+    virtual_router_id {{ tripleo_keepalived['router_id'] | default('1') }}
+    priority {{ tripleo_keepalived['priority'][deployment_host] | default('255') }}
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass {{ tripleo_keepalived['password'] | default('keepalived_password') }}
+    }
+    virtual_ipaddress {
+        {{ ctlplane_vip }}/24
+    }
+}

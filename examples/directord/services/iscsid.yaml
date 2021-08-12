@@ -1,0 +1,20 @@
+id: iscsid
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - iscsid.init
+    requires:
+      - config.init
+      - repos.init
+    jobs:
+      - DNF: iscsi-initiator-utils iscsi-initiator-utils-iscsiuio
+      - ADD: >
+          --blueprint files/iscsid/iscsid.conf.j2 /etc/iscsi/iscsid.conf
+          --chown root
+      - RUN: systemctl start iscsi
+      - RUN: systemctl enable iscsi
+

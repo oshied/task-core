@@ -1,0 +1,17 @@
+id: openvswitch
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - openvswitch.init
+    requires:
+      - config.init
+      - repos.init
+    jobs:
+      - DNF: openvswitch
+      - RUN: systemctl enable openvswitch
+      - RUN: systemctl start openvswitch
+

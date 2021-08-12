@@ -1,0 +1,120 @@
+id: keystone
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: init
+    driver: directord
+    provides:
+      - openstack-keystone.init
+    requires:
+      - config.init
+      # provides mysql_root_password
+      - mariadb.init
+    jobs:
+      - ARG: keystone_region RegionOne
+      - ARG: keystone_db_username keystone
+      - ARG: keystone_db_password secrete
+      - RUN: --stdout-arg keystone_db_host echo "{{ ctlplane_vip }}"
+      - ARG: keystone_db_name keystone
+      - ARG: keystone_admin_pass keystone
+      - ARG: keystone_fernet_key_0 BdoObZyvFgpawyIBnCEs6ej1bIr_xZwm2q6f_32KmlU=
+      - ARG: keystone_fernet_key_1 aQC45xtlGr40TjPurZ_tJjwbAMJwkV1w8IZwf4Fe0ZU=
+
+  - id: setup
+    action: setup
+    driver: directord
+    provides:
+      - openstack-keystone.setup
+    requires:
+      - config.init
+      - openstack-keystone.init
+      - repos.init
+      - httpd.init
+    jobs:
+      - DNF: openstack-keystone python3-mod_wsgi python3-openstackclient
+      - WORKDIR: --chown keystone --chmod 0700 /etc/keystone/fernet-keys
+      - RUN: >-
+          if [ ! -f /etc/keystone/fernet-keys/0 ]; then
+            touch /etc/keystone/fernet-keys/0;
+            chown keystone /etc/keystone/fernet-keys/0;
+            chmod 0600 /etc/keystone/fernet-keys/0;
+            echo "{{ keystone_fernet_key_0 }}" > /etc/keystone/fernet-keys/0;
+          fi
+      - RUN: >-
+          if [ ! -f /etc/keystone/fernet-keys/1 ]; then
+            touch /etc/keystone/fernet-keys/1;
+            chown keystone /etc/keystone/fernet-keys/1;
+            chmod 0600 /etc/keystone/fernet-keys/1;
+            echo "{{ keystone_fernet_key_1 }}" > /etc/keystone/fernet-keys/1;
+          fi
+      - RUN: >-
+          crudini --set /etc/keystone/keystone.conf database connection
+          "mysql+pymysql://{{ keystone_db_username }}:{{ keystone_db_password }}@{{ keystone_db_host }}/{{ keystone_db_name }}?read_default_file=/etc/my.cnf.d/tripleo.cnf&read_default_group=tripleo"
+      - RUN: crudini --set /etc/keystone/keystone.conf token provider fernet
+      - RUN: rm -rf /etc/httpd/conf.d/wsgi-keystone.conf
+      - WORKDIR: --chown keystone /var/www/cgi-bin/keystone
+      - RUN: cp /usr/bin/keystone-wsgi-public /var/www/cgi-bin/keystone/keystone-wsgi-public
+      - ADD: >
+          --blueprint files/keystone/wsgi-keystone.conf.j2
+          /etc/httpd/conf.d/wsgi-keystone.conf
+
+  - id: database
+    action: database
+    driver: directord
+    provides:
+      - openstack-keystone.database
+    requires:
+      - openstack-keystone.setup
+      - mariadb.start
+    jobs:
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "CREATE DATABASE IF NOT EXISTS keystone;"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY '{{ keystone_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY '{{ keystone_db_password }}';"
+      - RUN: --run-once mysql -u root -p{{ mysql_root_password }} -e "FLUSH PRIVILEGES;"
+      - RUN: --run-once keystone-manage db_sync
+      - RUN: --run-once keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+      - RUN: --run-once keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+
+  - id: bootstrap
+    action: bootstrap
+    driver: directord
+    provides:
+      - openstack-keystone.bootstrap
+    requires:
+      - openstack-keystone.database
+    jobs:
+      - RUN: setsebool -P httpd_use_openstack 1
+      - RUN: setsebool -P httpd_can_network_connect 1
+      - RUN: --skip-cache systemctl restart httpd.service
+      - RUN: >-
+          --run-once
+          keystone-manage bootstrap
+          --bootstrap-password {{ keystone_admin_pass }}
+          --bootstrap-username admin
+          --bootstrap-project-name admin
+          --bootstrap-role-name admin
+          --bootstrap-service-name keystone
+          --bootstrap-region-id {{ keystone_region }}
+          --bootstrap-admin-url http://{{ ctlplane_vip }}:35357
+          --bootstrap-public-url http://{{ ctlplane_vip }}:5000
+          --bootstrap-internal-url http://{{ ctlplane_vip }}:5000
+
+  - id: cloud-config
+    action: cloud-config
+    driver: directord
+    provides:
+      - openstack-keystone.cloud-config
+    requires:
+      - openstack-keystone.bootstrap
+    jobs:
+      - WORKDIR: /etc/openstack
+      - ADD: >
+          --blueprint files/keystone/clouds.yaml.j2
+          /etc/openstack/clouds.yaml
+          --chown root
+          --chmod 0600
+      # create service project for future use
+      - RUN: >-
+          --run-once
+          openstack --os-cloud overcloud project create --or-show service

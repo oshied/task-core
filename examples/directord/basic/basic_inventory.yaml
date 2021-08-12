@@ -1,0 +1,10 @@
+hosts:
+  task-core-1:
+    role: controller
+  task-core-2:
+    role: controller
+  task-core-3:
+    role: controller
+  task-core-4:
+    role: compute
+

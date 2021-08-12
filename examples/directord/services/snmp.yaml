@@ -1,0 +1,20 @@
+id: snmp
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - snmp.init
+    requires:
+      - config.init
+      - repos.init
+    jobs:
+      - DNF: net-snmp
+      - ADD: >
+          --blueprint files/snmp/snmpd.conf.j2 /etc/snmp/snmpd.conf
+          --chown root
+      - RUN: systemctl start snmpd
+      - RUN: systemctl enable snmpd
+

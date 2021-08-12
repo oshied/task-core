@@ -1,0 +1,36 @@
+id: kernel
+type: service
+version: 1.0.0
+tasks:
+  # TODO(mwhahaha): vars for ADD needs some attention
+  - id: kernel-modules
+    action: run
+    driver: directord
+    provides:
+      - kernel-modules.init
+    requires:
+      - config.init
+    jobs:
+      - WORKDIR: /etc/modules-load.d
+      - ADD: >
+          --blueprint files/kernel/tripleo-modprobe.conf.j2 /etc/modules-load.d/99-tripleo.conf
+          --chown root
+      - RUN: systemctl restart systemd-modules-load.service
+
+  - id: sysctl
+    action: run
+    driver: directord
+    provides:
+      - sysctl.init
+    requires:
+      - config.init
+      - kernel-modules.init
+      - tuned.init
+    jobs:
+      - ADD: >
+          --blueprint files/kernel/tripleo-sysctl.conf.j2 /etc/sysctl.d/99-tripleo.conf
+          --chown root
+      - RUN: systemctl restart systemd-sysctl.service
+
+
+

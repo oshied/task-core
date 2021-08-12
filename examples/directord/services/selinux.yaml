@@ -1,0 +1,13 @@
+id: selinux
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - selinux.init
+    requires:
+      - config.init
+    jobs:
+      - RUN: setenforce {{ tripleo_selinux_enforce }}
