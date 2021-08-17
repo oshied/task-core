@@ -124,20 +124,29 @@ class DirectordTask(ServiceTask):
 
         LOG.debug(jobs)
 
-        failure = list()
-        for item in jobs:
-            LOG.debug("Waiting for job... %s", item)
-            status, info = conn.poll(job_id=item)
-            if not status:
+        pending = jobs
+        success = list()
+        failures = list()
+        while len(pending) > 0:
+            job = pending.pop(0)
+            LOG.debug("Waiting for job... %s", job)
+            status, info = conn.poll(job_id=job)
+            if status is True:
+                success.append(job)
+            elif status is False:
                 # TODO(mwhahaha): handle failures
-                LOG.error(info)
-                failure.append(item)
+                LOG.error("Job %s failed. %s", job, info)
+                failures.append(job)
+            else:
+                pending.append(job)
+                time.sleep(0.1)
 
-        if failure:
-            raise ExecutionFailed("Directord job execution failed")
-
-        LOG.info("Completed %s", self)
-        return [TaskResult(not any(failure), {})]
+        LOG.info("Finished processing %s", self)
+        if failures:
+            raise ExecutionFailed(
+                "Directord job execution failed {}".format(", ".join(failures))
+            )
+        return [TaskResult(not any(failures), {})]
 
 
 class PrintTask(BaseTask):
