@@ -5,9 +5,16 @@ import os
 import random
 import time
 
-import ansible_runner
+try:
+    import ansible_runner
+except ImportError:
+    ansible_runner = None
 from stevedore import driver
-from directord import DirectordConnect
+
+try:
+    from directord import DirectordConnect
+except ImportError:
+    DirectorConnect = None  # pylint: disable=invalid-name
 
 from .base import BaseTask
 from .base import BaseInstance
@@ -91,6 +98,10 @@ class DirectordTask(ServiceTask):
     """
 
     def execute(self, *args, **kwargs) -> list:
+        if not DirectordConnect():
+            raise Exception(
+                "directord libraries are unavailable. Please install directord."
+            )
         LOG.debug(
             "task execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
@@ -166,6 +177,11 @@ class AnsibleRunnerTask(BaseTask):
         return self._data.get("working_dir", os.getcwd())
 
     def execute(self, *args, **kwargs) -> list:
+        if not ansible_runner:
+            raise Exception(
+                "ansible-runner libraries are unavailable. Please "
+                "install ansible-runner."
+            )
         LOG.debug(
             "ansible execute - args: %s, kwargs: %s, hosts: %s, data; %s",
             args,
