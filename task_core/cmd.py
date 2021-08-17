@@ -7,6 +7,7 @@ import os
 import pprint
 import sys
 
+from datetime import datetime
 from taskflow import engines
 from taskflow.patterns import graph_flow as gf
 
@@ -95,6 +96,7 @@ def add_services_to_flow(flow, services) -> gf.Flow:
 
 def main():
     """task-core"""
+    start = datetime.now()
     cli = Cli()
     args = cli.parse_args()
 
@@ -122,12 +124,15 @@ def main():
     # NOTE(mwhahaha): directord doesn't work with parallel, use serial for now
     result = engines.run(flow, engine="serial")
     LOG.info("Ran %s tasks...", len(result.keys()))
+    end = datetime.now()
+    LOG.info("Elapsed time: %s", end - start)
     LOG.info("Done...")
     pprint.pprint(result)
 
 
 def example():
     """task-core-example"""
+    start = datetime.now()
     logging.basicConfig(
         format="[%(asctime)s] [%(levelname)s] %(message)s", level=logging.DEBUG
     )
@@ -155,6 +160,9 @@ def example():
     LOG.info("Running...")
     result = engines.run(flow, engine="parallel")
     LOG.info("Ran %s tasks...", len(result.keys()))
+    end = datetime.now()
+    LOG.info("Elapsed time: %s", end - start)
+    LOG.info("Done...")
     pprint.pprint(result)
 
 

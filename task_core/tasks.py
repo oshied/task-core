@@ -122,7 +122,7 @@ class DirectordTask(ServiceTask):
             LOG.error("Exception while executing orcestrations, %s", e)
             raise
 
-        LOG.debug(jobs)
+        LOG.debug("Pending jobs... %s", jobs)
 
         pending = jobs
         success = list()
