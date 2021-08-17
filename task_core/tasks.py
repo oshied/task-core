@@ -128,7 +128,7 @@ class DirectordTask(ServiceTask):
         for item in jobs:
             LOG.debug("Waiting for job... %s", item)
             status, info = conn.poll(job_id=item)
-            if status is False:
+            if not status:
                 # TODO(mwhahaha): handle failures
                 LOG.error(info)
                 failure.append(item)
