@@ -18,7 +18,7 @@ class BaseFileData:
         self._data = None
         if os.path.isfile(definition):
             # if we were given a file, load it
-            with open(definition) as fin:
+            with open(definition, encoding="utf-8", mode="r") as fin:
                 self._data = yaml.safe_load(fin)
         elif os.path.isdir(definition):
             # if the definition is a directory, then find all the
@@ -26,7 +26,7 @@ class BaseFileData:
             self._data = {}
             files = glob.glob(os.path.join(definition, "**", "*.y*ml"), recursive=True)
             for file in files:
-                with open(file) as fin:
+                with open(file, encoding="utf-8", mode="r") as fin:
                     self._data = merge_dict(self._data, yaml.safe_load(fin))
         elif isinstance(definition, dict):
             self._data = definition

@@ -66,5 +66,5 @@ class Service(BaseFileData):
         return tasks
 
     def save(self, location) -> None:
-        with open(location, "w") as fout:
+        with open(location, encoding="utf-8", mode="w") as fout:
             yaml.dump(self.data, fout)

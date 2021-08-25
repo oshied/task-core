@@ -25,7 +25,9 @@ class BaseSchemaValidator(BaseInstance):
         raise NotImplementedError("Please implement schema to return the schema")
 
     def _load_schema(self, filename):
-        with open(os.path.join(self.schema_folder, filename)) as schema_file:
+        with open(
+            os.path.join(self.schema_folder, filename), encoding="utf-8", mode="r"
+        ) as schema_file:
             self._schema = yaml.safe_load(schema_file.read())
 
     def validate(self, obj):

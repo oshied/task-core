@@ -125,8 +125,8 @@ class DirectordTask(ServiceTask):
         LOG.debug("Pending jobs... %s", jobs)
 
         pending = jobs
-        success = list()
-        failures = list()
+        success = []
+        failures = []
         while len(pending) > 0:
             job = pending.pop(0)
             LOG.debug("Waiting for job... %s", job)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""script to convert deployed yaml from tripleo to an ansible inventory"""
 
 import argparse
 import platform
@@ -6,6 +7,7 @@ import yaml
 
 
 def parse_args():
+    """arguments for this script"""
     parser = argparse.ArgumentParser(
         description="deployed server yaml to ansible inventory"
     )
@@ -33,9 +35,10 @@ def parse_args():
 
 
 def parse_yaml(yaml_file, network):
-    with open(yaml_file, "r") as f:
-        data = yaml.safe_load(f)
-    nodes = data.get("parameter_defaults", {}).get("NodePortMap")
+    """parse deploy yaml"""
+    with open(yaml_file, encoding="utf-8", mode="r") as file_handle:
+        yaml_data = yaml.safe_load(file_handle)
+    nodes = yaml_data.get("parameter_defaults", {}).get("NodePortMap")
     if not nodes:
         raise Exception("NodePortMap missing from {}".format(yaml_file))
     return_data = {}
@@ -47,9 +50,10 @@ def parse_yaml(yaml_file, network):
     return return_data
 
 
-def generate_inventory(data, args):
-    output = args.output_yaml
-    ssh_user = args.ssh_user
+def generate_inventory(host_data, script_args):
+    """generate ansible inventory yaml"""
+    output = script_args.output_yaml
+    ssh_user = script_args.ssh_user
     local_node = platform.node().split(",", 1)[0]
     inv = {
         "all": {
@@ -60,28 +64,28 @@ def generate_inventory(data, args):
     hosts = inv["all"]["hosts"]
     children = inv["all"]["children"]
 
-    for node, ip in data.items():
-        hosts[node] = {"ansible_host": ip, "ansible_user": ssh_user}
+    for node, ipaddr in host_data.items():
+        hosts[node] = {"ansible_host": ipaddr, "ansible_user": ssh_user}
         parts = node.split("-")
         parts_count = len(parts)
         if parts_count >= 2:
-            for x in range(parts_count - 1):
-                if not children.get(parts[x]):
-                    children[parts[x]] = {node: {}}
+            for i in range(parts_count - 1):
+                if not children.get(parts[i]):
+                    children[parts[i]] = {node: {}}
                 else:
-                    children[parts[x]][node] = {}
+                    children[parts[i]][node] = {}
         else:
             raise Exception(
                 "Unable to handle hostname format. Format expects "
                 "role-# or cloud-role-#"
             )
-    data_yaml = yaml.safe_dump(inv)
+    inv_yaml = yaml.safe_dump(inv)
     if output:
-        with open(output, "w+") as f:
-            f.write(data_yaml)
+        with open(output, encoding="utf-8", mode="w+") as output_file:
+            output_file.write(inv_yaml)
         print("Inventory written to {}".format(output))
     else:
-        print(data_yaml)
+        print(inv_yaml)
 
 
 if __name__ == "__main__":

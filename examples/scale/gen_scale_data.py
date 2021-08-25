@@ -12,7 +12,7 @@ SERVICE_COUNT = 1000
 
 def dump_yaml(filename, data):
     print(f"Outputting {filename}...")
-    with open(filename, "w") as outfile:
+    with open(filename, encoding="utf-8", mode="w") as outfile:
         yaml.dump(data, outfile, default_flow_style=False)
 
 
