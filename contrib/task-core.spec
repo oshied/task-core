@@ -109,6 +109,7 @@ rm -rf *.egg-info
 %{_bindir}/%{name}
 %{_bindir}/task-core-example
 %{_datadir}/%{name}/schema
+%{_datadir}/%{name}/contrib
 
 %files -n %{name}-examples
 %license LICENSE
