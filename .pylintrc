@@ -144,7 +144,8 @@ disable=print-statement,
         no-member, # PyCQA/pylint#3157
         too-many-public-methods, # tests can have many members
         missing-function-docstring, # mwhahaha: enable later as needed
-        fixme # mwhahaha: TODOs shouldn't reduce lint quality
+        fixme, # mwhahaha: TODOs shouldn't reduce lint quality
+        duplicate-code # mwhahaha: Can't be disabled selectively so helper scripts are hitting it
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
