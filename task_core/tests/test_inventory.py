@@ -48,7 +48,7 @@ class TestInventory(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_INVENTORY_DATA)
         ) as open_mock:
             obj = inventory.Inventory("/foo/bar")
-            open_mock.assert_called_with("/foo/bar")
+            open_mock.assert_called_with("/foo/bar", encoding="utf-8", mode="r")
             self.assertEqual(obj.data, {"hosts": hosts})
             self.assertEqual(obj.hosts, hosts)
             self.assertEqual(obj.get_role_hosts(), hosts.keys())
@@ -60,7 +60,7 @@ class TestInventory(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_INVENTORY_DATA)
         ) as open_mock:
             obj = inventory.Inventory("/foo/bar")
-            open_mock.assert_called_with("/foo/bar")
+            open_mock.assert_called_with("/foo/bar", encoding="utf-8", mode="r")
             self.assertEqual(obj.get_role_hosts("keystone"), ["host-a"])
 
 
@@ -83,7 +83,7 @@ class TestRoles(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_ROLES_DATA)
         ) as open_mock:
             obj = inventory.Roles("/foo/bar")
-            open_mock.assert_called_with("/foo/bar")
+            open_mock.assert_called_with("/foo/bar", encoding="utf-8", mode="r")
             # todo: data
             self.assertEqual(obj.roles, {"basic": mock.ANY, "keystone": mock.ANY})
             self.assertTrue(isinstance(obj.roles.get("basic"), inventory.Role))
@@ -98,7 +98,7 @@ class TestRoles(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_ROLES_DATA)
         ) as open_mock:
             obj = inventory.Roles("/foo/bar")
-            open_mock.assert_called_with("/foo/bar")
+            open_mock.assert_called_with("/foo/bar", encoding="utf-8", mode="r")
             self.assertRaises(ex.InvalidRole, obj.get_services, "doesnotexist")
 
 

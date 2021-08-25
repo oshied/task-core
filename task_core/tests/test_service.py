@@ -68,7 +68,7 @@ class TestService(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_SERVICE_DATA)
         ) as open_mock:
             obj = service.Service("/foo/bar")
-            open_mock.assert_called_with("/foo/bar")
+            open_mock.assert_called_with("/foo/bar", encoding="utf-8", mode="r")
             self.assertEqual(obj.type, "service")
             self.assertEqual(obj.version, "1.0.0")
             self.assertEqual(obj.provides, "service-a")
@@ -81,7 +81,7 @@ class TestService(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_SERVICE_DATA)
         ) as open_mock:
             obj = service.Service("/hosts")
-            open_mock.assert_called_with("/hosts")
+            open_mock.assert_called_with("/hosts", encoding="utf-8", mode="r")
             self.assertEqual(obj.hosts, [])
             self.assertEqual(obj.add_host("test"), ["test"])
             self.assertEqual(obj.remove_host("test"), [])
@@ -104,7 +104,7 @@ class TestService(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_SERVICE_DATA)
         ) as open_mock:
             obj = service.Service("/tasks")
-            open_mock.assert_called_with("/tasks")
+            open_mock.assert_called_with("/tasks", encoding="utf-8", mode="r")
             self.mock_taskmgr.get_driver.return_value = TestTaskA
             ret = obj.build_tasks()
             self.assertEqual(len(ret), 4)
@@ -122,7 +122,7 @@ class TestService(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_SERVICE_DATA)
         ) as open_mock:
             obj = service.Service("/tasks")
-            open_mock.assert_called_with("/tasks")
+            open_mock.assert_called_with("/tasks", encoding="utf-8", mode="r")
             obj.save("/tmp/foo")
-            open_mock.assert_called_with("/tmp/foo", "w")
+            open_mock.assert_called_with("/tmp/foo", encoding="utf-8", mode="w")
             mock_dump.assert_called_with(yaml.safe_load(DUMMY_SERVICE_DATA), mock.ANY)

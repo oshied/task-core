@@ -26,7 +26,7 @@ class TestBaseFileData(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_FILE_DATA_ID)
         ) as open_mock:
             obj = base.BaseFileData("/foo/bar")
-            open_mock.assert_called_with("/foo/bar")
+            open_mock.assert_called_with("/foo/bar", encoding="utf-8", mode="r")
             self.assertEqual(obj.data, {"id": "foo"})
 
     @mock.patch("os.path.isfile", return_value=True)
@@ -36,7 +36,7 @@ class TestBaseFileData(unittest.TestCase):
             "builtins.open", mock.mock_open(read_data=DUMMY_FILE_DATA_NAME)
         ) as open_mock:
             obj = base.BaseFileData("/foo/bar")
-            open_mock.assert_called_with("/foo/bar")
+            open_mock.assert_called_with("/foo/bar", encoding="utf-8", mode="r")
             self.assertEqual(obj.data, {"name": "bar"})
             self.assertEqual(obj.name, "bar")
 
@@ -52,7 +52,10 @@ class TestBaseFileData(unittest.TestCase):
             ]
             open_mock.side_effect = mock_files
             obj = base.BaseFileData("/foo/bar")
-            open_calls = [mock.call("/foo/bar/a.yaml"), mock.call("/foo/bar/b.yaml")]
+            open_calls = [
+                mock.call("/foo/bar/a.yaml", encoding="utf-8", mode="r"),
+                mock.call("/foo/bar/b.yaml", encoding="utf-8", mode="r"),
+            ]
             open_mock.assert_has_calls(open_calls)
             self.assertEqual(obj.data, {"id": "foo", "name": "bar"})
             self.assertEqual(obj.name, "foo")
