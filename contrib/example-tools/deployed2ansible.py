@@ -71,9 +71,9 @@ def generate_inventory(host_data, script_args):
         if parts_count >= 2:
             for i in range(parts_count - 1):
                 if not children.get(parts[i]):
-                    children[parts[i]] = {node: {}}
+                    children[parts[i]] = {"hosts": {node: {}}}
                 else:
-                    children[parts[i]][node] = {}
+                    children[parts[i]]["hosts"][node] = {}
         else:
             raise Exception(
                 "Unable to handle hostname format. Format expects "
