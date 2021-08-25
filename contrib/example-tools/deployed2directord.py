@@ -38,6 +38,11 @@ def parse_args():
         help="network name to use",
     )
     parser.add_argument(
+        "--server-address",
+        default="192.168.24.2",
+        help="Directord server address. Defaults to 192.168.24.2",
+    )
+    parser.add_argument(
         "--local-user",
         dest="local_ssh_user",
         default=os.environ.get("USER", "stack"),
@@ -75,6 +80,7 @@ def parse_yaml(yaml_file, network):
 def generate_inventory(host_data, script_args):
     """generate ansible inventory yaml"""
     output = script_args.output_yaml
+    server_addr = script_args.server_address
     ssh_user = script_args.ssh_user
     ssh_port = script_args.ssh_port
     local_user = script_args.local_ssh_user
@@ -82,7 +88,7 @@ def generate_inventory(host_data, script_args):
     inv = {
         "directord_server": {
             "args": {"port": local_port, "username": local_user},
-            "targets": [{"host": "127.0.0.1"}],
+            "targets": [{"host": server_addr}],
         },
         "directord_clients": {
             "args": {"port": ssh_port, "username": ssh_user},
