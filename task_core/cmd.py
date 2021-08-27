@@ -63,7 +63,11 @@ def load_services(services_dir) -> dict:
     files = glob.glob(os.path.join(services_dir, "**", "*.yaml"), recursive=True)
     services = {}
     for file in files:
-        svc = Service(file)
+        try:
+            svc = Service(file)
+        except Exception:
+            LOG.error("Error loading %s", file)
+            raise
         services[svc.name] = svc
     return services
 
