@@ -135,6 +135,7 @@ def main():
         result = engines.run(flow, engine="parallel")
         LOG.info("Ran %s tasks...", len(result.keys()))
     else:
+        result = None
         LOG.info("Skipping execution due to --noop...")
     end = datetime.now()
     LOG.info("Elapsed time: %s", end - start)
