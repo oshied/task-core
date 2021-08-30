@@ -94,7 +94,7 @@ def add_services_to_flow(flow, services) -> gf.Flow:
         service = services.get(service_id)
         if len(service.hosts) == 0:
             # skip services with no target hosts
-            LOG.debug("Skipping adding service %s due to no hosts...", service.name)
+            LOG.warning("Skipping adding service %s due to no hosts...", service.name)
             continue
         LOG.debug("Adding %s tasks...", service.name)
         service_flow = gf.Flow(service.name)
