@@ -55,6 +55,12 @@ class Cli:
             default=False,
             help=("Enable debug logging"),
         )
+        self.parser.add_argument(
+            "--noop",
+            action="store_true",
+            default=False,
+            help=("Do not run the deployment, only process the tasks")
+        )
         args = self.parser.parse_args()
         return args
 
@@ -124,10 +130,12 @@ def main():
     LOG.info("Adding services to flow...")
     add_services_to_flow(flow, services)
 
-    LOG.info("Starting execution...")
-    # NOTE(mwhahaha): directord doesn't work with parallel, use serial for now
-    result = engines.run(flow, engine="serial")
-    LOG.info("Ran %s tasks...", len(result.keys()))
+    if not args.noop:
+        LOG.info("Starting execution...")
+        result = engines.run(flow, engine="parallel")
+        LOG.info("Ran %s tasks...", len(result.keys()))
+    else:
+        LOG.info("Skipping execution due to --noop...")
     end = datetime.now()
     LOG.info("Elapsed time: %s", end - start)
     LOG.info("Done...")
