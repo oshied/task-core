@@ -114,7 +114,9 @@ class DirectordTask(ServiceTask):
         LOG.info("%s | Running", self)
 
         # TODO(mwhahaha): make this configurable @ task level
-        conn = DirectordConnect(force_async=True)
+        conn = DirectordConnect(
+            force_async=True  # pylint: disable=unexpected-keyword-arg
+        )
 
         try:
             jobs = conn.orchestrate(

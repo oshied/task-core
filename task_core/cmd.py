@@ -105,8 +105,8 @@ def add_services_to_flow(flow, services) -> gf.Flow:
                 flow.add(task)
         except tf_exc.DependencyFailure:
             dot = networkx.drawing.nx_pydot.to_pydot(
-                flow._graph
-            )  # pylint: disable=protected-access
+                flow._graph  # pylint: disable=protected-access
+            )
             dot.write_svg("failure.svg")
             LOG.error("Failure graph svg written out to failure.svg")
             raise
@@ -146,8 +146,8 @@ def main():
     else:
         result = None
         dot = networkx.drawing.nx_pydot.to_pydot(
-            flow._graph
-        )  # pylint: disable=protected-access
+            flow._graph  # pylint: disable=protected-access
+        )
         dot.write_svg("noop.svg")
         LOG.info("Task graph written out to noop.svg")
         LOG.info("Skipping execution due to --noop...")
