@@ -126,6 +126,31 @@ definitions:
       - driver
       - playbook
     type: object
+  noop_task:
+    type: object
+    properties:
+      id:
+        oneOf:
+          - $ref: "#/definitions/task_id"
+      action:
+        type: string
+      provides:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      requires:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      driver:
+        const: noop
+    required:
+      - id
+      - action
+      - driver
+    type: object
 
 properties:
   id:

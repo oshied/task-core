@@ -11,6 +11,7 @@ tasks:
     requires:
       - repos.init
       - hostname.init
+      - tripleo_packages.init
     jobs:
       - ADD: ../basic/basic_options.yaml /var/tmp/directord-config.yaml
       - CACHEFILE: /var/tmp/directord-config.yaml

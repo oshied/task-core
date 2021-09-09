@@ -15,6 +15,7 @@ from taskflow import exceptions as tf_exc
 from taskflow.patterns import graph_flow as gf
 
 from .exceptions import InvalidService
+from .logging import setup_basic_logging
 from .inventory import Inventory
 from .inventory import Roles
 from .service import Service
@@ -92,7 +93,7 @@ def add_hosts_to_services(inventory, roles, services) -> dict:
     return services
 
 
-def add_services_to_flow(flow, services) -> gf.Flow:
+def add_services_to_flow(flow, services, task_type_override=None) -> gf.Flow:
     for service_id in services:
         service = services.get(service_id)
         if len(service.hosts) == 0:
@@ -101,7 +102,7 @@ def add_services_to_flow(flow, services) -> gf.Flow:
             continue
         LOG.debug("Adding %s tasks...", service.name)
         try:
-            for task in service.build_tasks():
+            for task in service.build_tasks(task_type_override):
                 flow.add(task)
         except tf_exc.DependencyFailure:
             dot = networkx.drawing.nx_pydot.to_pydot(
@@ -119,12 +120,7 @@ def main():
     cli = Cli()
     args = cli.parse_args()
 
-    log_level = logging.INFO
-    if args.debug:
-        log_level = logging.DEBUG
-    logging.basicConfig(
-        format="[%(asctime)s] [%(levelname)s] %(message)s", level=log_level
-    )
+    setup_basic_logging(args.debug)
     LOG.info("Loading services from %s", args.services_dir)
     services = load_services(args.services_dir)
     LOG.info("Loading inventory from %s....", args.inventory_file)
@@ -160,9 +156,7 @@ def main():
 def example():
     """task-core-example"""
     start = datetime.now()
-    logging.basicConfig(
-        format="[%(asctime)s] [%(levelname)s] %(message)s", level=logging.DEBUG
-    )
+    setup_basic_logging(True)
 
     services_dir = os.path.join(
         sys.prefix, "share", "task-core", "examples", "framework", "services"

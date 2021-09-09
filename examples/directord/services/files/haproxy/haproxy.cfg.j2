@@ -32,9 +32,9 @@ listen cinder
   http-request set-header X-Forwarded-Port %[dst_port]
   option httpchk GET /healthcheck
   option httplog
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:8776 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen glance_api
   bind {{ ctlplane_vip }}:9292 transparent
@@ -44,9 +44,9 @@ listen glance_api
   http-request set-header X-Forwarded-Port %[dst_port]
   option httpchk GET /healthcheck
   option httplog
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:9292 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen haproxy.stats
   bind 127.0.0.1:1993 transparent
@@ -68,9 +68,9 @@ listen heat_api
   option httplog
   timeout client 10m
   timeout server 10m
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:8004 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen heat_cfn
   bind {{ ctlplane_vip }}:8000 transparent
@@ -84,9 +84,9 @@ listen heat_cfn
   option httplog
   timeout client 10m
   timeout server 10m
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:8000 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen horizon
   bind {{ ctlplane_vip }}:80 transparent
@@ -94,9 +94,9 @@ listen horizon
   cookie SERVERID insert indirect nocache
   option forwardfor
   option httpchk
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:80 check cookie {{ k }} fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen keystone_admin
   bind {{ ctlplane_vip }}:35357 transparent
@@ -106,9 +106,9 @@ listen keystone_admin
   http-request set-header X-Forwarded-Port %[dst_port]
   option httpchk GET /healthcheck
   option httplog
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:5000 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen keystone_public
   bind {{ ctlplane_vip }}:5000 transparent
@@ -118,9 +118,9 @@ listen keystone_public
   http-request set-header X-Forwarded-Port %[dst_port]
   option httpchk GET /healthcheck
   option httplog
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:5000 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen mysql
   bind {{ ctlplane_vip }}:3306 transparent
@@ -131,9 +131,9 @@ listen mysql
   stick-table type ip size 1000
   timeout client 90m
   timeout server 90m
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:3306 backup check inter 1s on-marked-down shutdown-sessions port 9200
-{%- endfor %}
+{% endfor %}
 
 listen neutron
   bind {{ ctlplane_vip }}:9696 transparent
@@ -144,9 +144,9 @@ listen neutron
   http-request set-header X-Forwarded-Port %[dst_port]
   option httpchk GET /healthcheck
   option httplog
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:9696 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen nova_metadata
   bind {{ ctlplane_vip }}:8775 transparent
@@ -158,9 +158,9 @@ listen nova_metadata
   http-request set-header X-Forwarded-Port %[dst_port]
   option httpchk
   option httplog
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:8775 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen nova_novncproxy
   bind {{ ctlplane_vip }}:6080 transparent
@@ -172,9 +172,9 @@ listen nova_novncproxy
   option tcpka
   option tcplog
   timeout tunnel 1h
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:6080 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen nova_osapi
   bind {{ ctlplane_vip }}:8774 transparent
@@ -184,9 +184,9 @@ listen nova_osapi
   http-request set-header X-Forwarded-Port %[dst_port]
   option httpchk
   option httplog
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:8774 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen placement
   bind {{ ctlplane_vip }}:8778 transparent
@@ -196,9 +196,9 @@ listen placement
   http-request set-header X-Forwarded-Port %[dst_port]
   option httpchk
   option httplog
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:8778 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 
 listen swift_proxy_server
   bind {{ ctlplane_vip }}:8080 transparent
@@ -211,7 +211,7 @@ listen swift_proxy_server
   option httplog
   timeout client 2m
   timeout server 2m
-{%- for k, v in tripleo_controller_ips.items() %}
+{% for k, v in tripleo_controller_ips.items() %}
   server {{ k }} {{ v }}:8080 check fall 5 inter 2000 rise 2
-{%- endfor %}
+{% endfor %}
 

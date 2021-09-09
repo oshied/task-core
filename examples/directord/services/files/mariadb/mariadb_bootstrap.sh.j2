@@ -22,9 +22,9 @@ DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 # galera clustercheck
-{%- for v in tripleo_cluster_addresses %}
+{% for v in tripleo_cluster_addresses %}
 GRANT PROCESS ON *.* TO 'clustercheckuser'@'{{ v }}' IDENTIFIED BY 'clustercheckpassword!';
-{%- endfor %}
+{% endfor %}
 FLUSH PRIVILEGES;
 SHUTDOWN;
 EOF

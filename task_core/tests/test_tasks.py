@@ -238,3 +238,26 @@ class TestAnsibleRunnerTask(unittest.TestCase):
         result = obj.execute()
         self.assertFalse(result[0].status)
         self.assertEqual(result[0].data, {"stdout": "foo", "stats": {}})
+
+
+class TestNoopTask(unittest.TestCase):
+    """test NoopTask"""
+
+    def setUp(self):
+        super().setUp()
+        self.data = yaml.safe_load(DUMMY_PRINT_TASK_DATA)
+
+    def test_object(self):
+        """test basic object"""
+        obj = tasks.NoopTask("foo", self.data, ["host-a", "host-b"])
+        self.assertEqual(obj.data, self.data)
+        self.assertEqual(obj.hosts, ["host-a", "host-b"])
+        self.assertEqual(obj.service, "foo")
+        self.assertEqual(obj.task_id, "print")
+
+    def test_execute(self):
+        """test execute"""
+        obj = tasks.NoopTask("foo", self.data, ["host-a", "host-b"])
+        result = obj.execute()
+        self.assertTrue(result[0].status)
+        self.assertEqual(result[0].data, {"hosts": ["host-a", "host-b"], "id": "print"})

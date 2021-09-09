@@ -409,11 +409,11 @@ queue_master_locator = {{ rabbitmq_queue_master_locator }}
 
 #cluster_formation.peer_discovery_backend     = rabbit_peer_discovery_classic_config
 #
-{%- set counter = 1 %}
-{%- for k in tripleo_rabbitmq_hosts %}
+{% set counter = 1 %}
+{% for k in tripleo_rabbitmq_hosts %}
 #cluster_formation.classic_config.nodes.{{ counter }} = rabbit@{{ k }}
-{%- set counter = counter + 1 %}
-{%- endfor %}
+{% set counter = counter + 1 %}
+{% endfor %}
 # cluster_formation.classic_config.nodes.1 = rabbit1@hostname
 # cluster_formation.classic_config.nodes.2 = rabbit2@hostname
 # cluster_formation.classic_config.nodes.3 = rabbit3@hostname

@@ -221,3 +221,22 @@ class AnsibleRunnerTask(BaseTask):
         status = runner.rc == 0 and runner.status == "successful"
         LOG.info("%s | Completed", self)
         return [TaskResult(status, data)]
+
+
+class NoopTask(BaseTask):
+    """noop task that returns name and hosts in results"""
+
+    def execute(self, *args, **kwargs) -> list:
+        LOG.debug(
+            "%s noop execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            self,
+            args,
+            kwargs,
+            self.hosts,
+            self.data,
+        )
+        LOG.info("%s | Running", self)
+        data = {"id": self.task_id, "hosts": self.hosts}
+        # https://ansible-runner.readthedocs.io/en/stable/python_interface.html#the-runner-object
+        LOG.info("%s | Completed", self)
+        return [TaskResult(True, data)]

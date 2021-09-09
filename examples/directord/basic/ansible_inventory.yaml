@@ -13,9 +13,9 @@ all:
         task-core-4: {}
     overcloud:
       hosts:
-        task-core-0: {}
         task-core-1: {}
         task-core-2: {}
+        task-core-3: {}
         task-core-4: {}
   hosts:
     task-core-0:

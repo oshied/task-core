@@ -166,6 +166,7 @@ tasks:
     requires:
       - openstack-nova-compute.setup
       - libvirt.service
+      - openstack-nova.service
     jobs:
       - RUN: --skip-cache systemctl enable openstack-nova-compute.service
       - RUN: --skip-cache systemctl restart openstack-nova-compute.service

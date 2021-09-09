@@ -73,6 +73,10 @@ class BaseTask(task.Task):
         return self._service
 
     @property
+    def driver(self) -> str:
+        return self._data.get("driver")
+
+    @property
     def task_id(self) -> str:
         return self._data.get("id")
 
