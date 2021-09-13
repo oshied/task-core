@@ -12,7 +12,7 @@ tasks:
       - hostname.init
       - tripleo_packages.init
     jobs:
-      - ADD: ../config_options.yaml /var/tmp/directord-config.yaml
+      - ADD: ../undercloud/config_options.yaml /var/tmp/directord-config.yaml
       - CACHEFILE: /var/tmp/directord-config.yaml
       # TODO(mwhahaha): I think there's a race here
       #- RUN: rm -rf /var/tmp/directord-config.yaml
