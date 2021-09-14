@@ -35,6 +35,5 @@ tasks:
     requires:
       - memcached.setup
     jobs:
-      - RUN: --skip-cache systemctl enable memcached
-      - RUN: --skip-cache systemctl start memcached
+      - SERVICE: --restarted --enable memcached
 

@@ -11,5 +11,4 @@ tasks:
       - repos.init
     jobs:
       - DNF: tuned
-      - RUN: systemctl start tuned
-      - RUN: systemctl enable tuned
+      - SERVICE: --enable tuned

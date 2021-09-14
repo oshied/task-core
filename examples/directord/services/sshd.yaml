@@ -15,6 +15,5 @@ tasks:
       - ADD: >
           --blueprint files/sshd/sshd_config.j2 /etc/ssh/sshd_config
           --chown root
-      - RUN: systemctl start sshd
-      - RUN: systemctl enable sshd
+      - SERVICE: --restarted --enable sshd
 

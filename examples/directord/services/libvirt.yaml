@@ -61,11 +61,7 @@ tasks:
     requires:
       - libvirt.setup
     jobs:
-      - RUN: --skip-cache systemctl enable dbus.service
-      - RUN: --skip-cache systemctl start dbus.service
-      - RUN: --skip-cache systemctl enable virtlockd.service
-      - RUN: --skip-cache systemctl start virtlockd.service
-      - RUN: --skip-cache systemctl enable virtlogd.service
-      - RUN: --skip-cache systemctl start virtlogd.service
-      - RUN: --skip-cache systemctl enable libvirtd.service
-      - RUN: --skip-cache systemctl restart libvirtd.service
+      - SERVICE: --enable dbus.service
+      - SERVICE: --enable virtlockd.service
+      - SERVICE: --enable virtlogd.service
+      - SERVICE: --enable libvirtd.service

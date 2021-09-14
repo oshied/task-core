@@ -15,7 +15,7 @@ tasks:
       - ADD: >
           --blueprint files/kernel/tripleo-modprobe.conf.j2 /etc/modules-load.d/99-tripleo.conf
           --chown root
-      - RUN: systemctl restart systemd-modules-load.service
+      - SERVICE: --restarted systemd-modules-load.service
 
   - id: sysctl
     action: run
@@ -30,7 +30,7 @@ tasks:
       - ADD: >
           --blueprint files/kernel/tripleo-sysctl.conf.j2 /etc/sysctl.d/99-tripleo.conf
           --chown root
-      - RUN: systemctl restart systemd-sysctl.service
+      - SERVICE: --restarted systemd-sysctl.service
 
 
 

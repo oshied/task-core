@@ -11,6 +11,5 @@ tasks:
       - repos.init
     jobs:
       - DNF: chrony crudini
-      - RUN: systemctl start chronyd
-      - RUN: systemctl enable chronyd
+      - SERVICE: --restarted --enable chronyd
 

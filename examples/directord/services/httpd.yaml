@@ -17,5 +17,4 @@ tasks:
             -e "s/^Listen 80/Listen 127.0.0.1:80/"
             -e "s/^#ServerName.*/ServerName {{ deployment_host }}/g"
             /etc/httpd/conf/httpd.conf
-      - RUN: systemctl start httpd.service
-      - RUN: systemctl enable httpd.service
+      - SERVICE: --enable httpd.service

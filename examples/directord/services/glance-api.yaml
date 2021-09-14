@@ -169,7 +169,4 @@ tasks:
       - openstack-glance.database
       - openstack-glance.keystone
     jobs:
-      - RUN: --skip-cache systemctl enable openstack-glance-api.service
-      # NOTE(mwhahaha): glance isn't wsgi ?!@
-      - RUN: --skip-cache systemctl restart openstack-glance-api.service
-#
+      - SERVICE: --restarted --enable openstack-glance-api.service

@@ -30,5 +30,4 @@ tasks:
     requires:
       - openstack-neutron.service
     jobs:
-      - RUN: --skip-cache systemctl enable neutron-l3-agent.service
-      - RUN: --skip-cache systemctl restart neutron-l3-agent.service
+      - SERVICE: --restarted --enable neutron-l3-agent.service

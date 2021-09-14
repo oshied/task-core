@@ -209,7 +209,7 @@ tasks:
       - openstack-placement.keystone
       - rabbitmq.service
     jobs:
-      - RUN: --skip-cache systemctl reload httpd.service
-      - RUN: --skip-cache systemctl restart openstack-nova-scheduler
-      - RUN: --skip-cache systemctl restart openstack-nova-conductor
-      - RUN: --skip-cache systemctl restart openstack-nova-novncproxy
+      - SERVICE: --restarted httpd.service
+      - SERVICE: --restarted --enable openstack-nova-scheduler
+      - SERVICE: --restarted --enable openstack-nova-conductor
+      - SERVICE: --restarted --enable openstack-nova-novncproxy

@@ -269,5 +269,4 @@ tasks:
       - openstack-neutron.database
       - openstack-neutron.keystone
     jobs:
-      - RUN: --skip-cache systemctl enable neutron-server.service
-      - RUN: --skip-cache systemctl restart neutron-server.service
+      - SERVICE: --restarted --enable neutron-server.service

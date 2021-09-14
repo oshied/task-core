@@ -11,6 +11,5 @@ tasks:
       - repos.init
     jobs:
       - DNF: openvswitch
-      - RUN: systemctl enable openvswitch
-      - RUN: systemctl start openvswitch
+      - SERVICE: --restarted --enable openvswitch
 

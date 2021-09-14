@@ -129,5 +129,5 @@ tasks:
       - openstack-placement.database
       - openstack-placement.keystone
     jobs:
-      - RUN: --skip-cache systemctl reload httpd.service
+      - SERVICE: --restarted httpd.service
 #

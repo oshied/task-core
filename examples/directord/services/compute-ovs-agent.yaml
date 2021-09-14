@@ -73,5 +73,4 @@ tasks:
     requires:
       - openstack-neutron.service
     jobs:
-      - RUN: --skip-cache systemctl enable neutron-openvswitch-agent.service neutron-destroy-patch-ports.service
-      - RUN: --skip-cache systemctl restart neutron-openvswitch-agent.service neutron-destroy-patch-ports.service
+      - SERVICE: --restarted --enable neutron-openvswitch-agent.service neutron-destroy-patch-ports.service

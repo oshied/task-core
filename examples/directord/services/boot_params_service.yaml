@@ -11,7 +11,7 @@ tasks:
       - tuned.init
     jobs:
       # TODO: switch a tuned profile & restart
-      - RUN: systemctl restart tuned
+      - SERVICE: --restarted tuned
 
   - id: kernel-args
     action: run

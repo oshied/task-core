@@ -15,6 +15,5 @@ tasks:
       - ADD: >
           --blueprint files/iscsid/iscsid.conf.j2 /etc/iscsi/iscsid.conf
           --chown root
-      - RUN: systemctl start iscsi
-      - RUN: systemctl enable iscsi
+      - SERVICE: --restarted --enable iscsi
 

@@ -15,6 +15,5 @@ tasks:
       - ADD: >
           --blueprint files/snmp/snmpd.conf.j2 /etc/snmp/snmpd.conf
           --chown root
-      - RUN: systemctl start snmpd
-      - RUN: systemctl enable snmpd
+      - SERVICE: --restarted --enable snmpd
 

@@ -11,5 +11,4 @@ tasks:
       - repos.init
     jobs:
       - DNF: podman
-      - RUN: systemctl start podman.socket
-      - RUN: systemctl enable podman.socket
+      - SERVICE: --enable podman.socket

@@ -133,5 +133,5 @@ tasks:
       - openstack-cinder.database
       - openstack-cinder.keystone
     jobs:
-      - RUN: --skip-cache systemctl reload httpd.service
+      - SERVICE: --restart httpd.service
 #

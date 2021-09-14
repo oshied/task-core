@@ -161,6 +161,5 @@ tasks:
       - openstack-swift-proxy.keystone
       - openstack-swift-ringbuilder.ring-sync
     jobs:
-      - RUN: --skip-cache systemctl enable openstack-swift-proxy.service
-      - RUN: --skip-cache systemctl restart openstack-swift-proxy.service
+      - SERVICE: --restarted --enable openstack-swift-proxy.service
 #

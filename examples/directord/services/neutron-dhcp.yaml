@@ -44,5 +44,4 @@ tasks:
     requires:
       - openstack-neutron.setup
     jobs:
-      - RUN: --skip-cache systemctl enable neutron-dhcp-agent.service
-      - RUN: --skip-cache systemctl restart neutron-dhcp-agent.service
+      - SERVICE: --restarted --enable neutron-dhcp-agent.service

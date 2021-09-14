@@ -143,8 +143,7 @@ tasks:
       - openstack-swift-storage.storage
       - openstack-swift-storage.rsyncd-setup
     jobs:
-      - RUN: --skip-cache systemctl enable rsyncd
-      - RUN: --skip-cache systemctl restart rsyncd
+      - SERVICE: --restarted --enable rsyncd
 
   - id: account-service
     action: account-service
@@ -156,8 +155,7 @@ tasks:
       - openstack-swift-storage.storage
       - openstack-swift-ringbuilder.ring-sync
     jobs:
-      - RUN: --skip-cache systemctl enable openstack-swift-account.service openstack-swift-account-auditor.service openstack-swift-account-reaper.service openstack-swift-account-replicator.service
-      - RUN: --skip-cache systemctl restart openstack-swift-account.service openstack-swift-account-auditor.service openstack-swift-account-reaper.service openstack-swift-account-replicator.service
+      - SERVICE: --restarted --enable openstack-swift-account.service openstack-swift-account-auditor.service openstack-swift-account-reaper.service openstack-swift-account-replicator.service
 
   - id: container-service
     action: container-service
@@ -169,8 +167,7 @@ tasks:
       - openstack-swift-storage.storage
       - openstack-swift-ringbuilder.ring-sync
     jobs:
-      - RUN: --skip-cache systemctl enable openstack-swift-container.service openstack-swift-container-auditor.service openstack-swift-container-replicator.service openstack-swift-container-updater.service
-      - RUN: --skip-cache systemctl restart openstack-swift-container.service openstack-swift-container-auditor.service openstack-swift-container-replicator.service openstack-swift-container-updater.service
+      - SERVICE: --restarted --enable openstack-swift-container.service openstack-swift-container-auditor.service openstack-swift-container-replicator.service openstack-swift-container-updater.service
 
   - id: object-service
     action: object-service
@@ -182,5 +179,4 @@ tasks:
       - openstack-swift-storage.storage
       - openstack-swift-ringbuilder.ring-sync
     jobs:
-      - RUN: --skip-cache systemctl enable openstack-swift-object.service openstack-swift-object-auditor.service openstack-swift-object-replicator.service openstack-swift-object-updater.service
-      - RUN: --skip-cache systemctl restart openstack-swift-object.service openstack-swift-object-auditor.service openstack-swift-object-replicator.service openstack-swift-object-updater.service
+      - SERVICE: --restarted --enable openstack-swift-object.service openstack-swift-object-auditor.service openstack-swift-object-replicator.service openstack-swift-object-updater.service

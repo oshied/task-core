@@ -111,4 +111,4 @@ tasks:
           --chmod 0700
           --chown root
       - RUN: bash /var/lib/rabbitmq/rabbitmq_setup.sh
-      - RUN: systemctl enable rabbitmq-server.service
+      - SERVICE: --enable rabbitmq-server.service

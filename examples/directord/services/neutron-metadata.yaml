@@ -41,5 +41,4 @@ tasks:
     requires:
       - openstack-neutron.service
     jobs:
-      - RUN: --skip-cache systemctl enable neutron-metadata-agent.service
-      - RUN: --skip-cache systemctl restart neutron-metadata-agent.service
+      - SERVICE: --restarted --enable neutron-metadata-agent.service

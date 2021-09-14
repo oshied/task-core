@@ -17,6 +17,5 @@ tasks:
       - ADD: >
           --blueprint files/keepalived/keepalived.conf.j2 /etc/keepalived/keepalived.conf
           --chown root
-      - RUN: systemctl enable keepalived
-      - RUN: --skip-cache systemctl restart keepalived
+      - SERVICE: --restarted --enable keepalived
 
