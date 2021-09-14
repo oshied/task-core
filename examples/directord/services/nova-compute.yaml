@@ -11,6 +11,7 @@ tasks:
       - config.init
       - rabbitmq.init
       - memcached.init
+      - network.init
       - openstack-cinder.init
       - openstack-glance.init
       - openstack-neutron.init
@@ -169,4 +170,4 @@ tasks:
       - libvirt.service
       - openstack-nova.service
     jobs:
-      - RUN: --restarted --enable openstack-nova-compute.service
+      - SERVICE: --restarted --enable openstack-nova-compute.service

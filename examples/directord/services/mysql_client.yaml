@@ -9,6 +9,7 @@ tasks:
       - mysql_client.init
     requires:
       - config.init
+      - network.init
       - repos.init
     jobs:
       - DNF: mariadb-connector-c-config

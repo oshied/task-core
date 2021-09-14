@@ -9,6 +9,7 @@ tasks:
       - sshd.init
     requires:
       - config.init
+      - network.init
       - repos.init
     jobs:
       - DNF: openssh-server

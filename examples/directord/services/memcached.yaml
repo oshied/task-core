@@ -9,6 +9,7 @@ tasks:
       - memcached.init
     requires:
       - config.init
+      - network.init
       - repos.init
     jobs:
       - ARG: memcache_host_ip "{{ tripleo_network_ips[deployment_host] }}"

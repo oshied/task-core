@@ -9,6 +9,7 @@ tasks:
       - mariadb.init
     requires:
       - config.init
+      - network.init
       - mysql_client.init
     jobs:
       - ARG: mysql_root_password SuperSecrete

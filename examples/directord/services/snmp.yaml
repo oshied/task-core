@@ -9,6 +9,7 @@ tasks:
       - snmp.init
     requires:
       - config.init
+      - network.init
       - repos.init
     jobs:
       - DNF: net-snmp

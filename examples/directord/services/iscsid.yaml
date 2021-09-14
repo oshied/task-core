@@ -9,6 +9,7 @@ tasks:
       - iscsid.init
     requires:
       - config.init
+      - network.init
       - repos.init
     jobs:
       - DNF: iscsi-initiator-utils iscsi-initiator-utils-iscsiuio

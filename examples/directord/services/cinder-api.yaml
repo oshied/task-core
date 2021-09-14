@@ -10,6 +10,7 @@ tasks:
     requires:
       - config.init
       - memcached.init
+      - network.init
     jobs:
       - ARG: cinder_region RegionOne
       - ARG: cinder_db_username cinder

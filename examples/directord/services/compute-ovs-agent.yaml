@@ -8,6 +8,7 @@ tasks:
     provides:
       - openstack-compute-ovs-agent.init
     requires:
+      - network.init
       - openstack-neutron.setup
     jobs:
       - ARG: ovs_local_ip "{{ tripleo_network_ips[deployment_host] }}"

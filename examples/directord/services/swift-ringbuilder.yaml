@@ -9,6 +9,7 @@ tasks:
       - openstack-swift-ringbuilder.init
     requires:
       - config.init
+      - network.init
       - openstack-swift-proxy.setup
       - openstack-swift-storage.init
       - repos.init

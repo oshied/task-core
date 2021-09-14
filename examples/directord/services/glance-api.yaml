@@ -10,6 +10,7 @@ tasks:
     requires:
       - config.init
       - memcached.init
+      - network.init
     jobs:
       - ARG: glance_region RegionOne
       - ARG: glance_db_username glance

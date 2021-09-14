@@ -9,6 +9,7 @@ tasks:
       - openstack-neutron-metadata.init
     requires:
       - config.init
+      - network.init
     jobs:
       - ARG: neutron_metadata_secret metadatasecrete
 
@@ -20,6 +21,7 @@ tasks:
     requires:
       - openstack-neutron-metadata.init
       - openstack-neutron.setup
+      - repos.init
     jobs:
       - DNF: openstack-neutron
       - RUN: >-

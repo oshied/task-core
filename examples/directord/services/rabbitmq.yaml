@@ -9,6 +9,7 @@ tasks:
       - rabbitmq.init
     requires:
       - config.init
+      - network.init
       - repos.init
     jobs:
       - DNF: rabbitmq-server erlang
@@ -31,7 +32,7 @@ tasks:
       - ARG: rabbitmq_ctl_dist_port_max 25683
       - ARG: rabbitmq_ctl_dist_port_min 25673
       - ARG: rabbitmq_cluster_name openstack_cluster
-      - ARG: rabbitmq_host hostname "{{ deployment_host }}"
+      - ARG: rabbitmq_host "{{ deployment_host }}"
       - QUERY: rabbitmq_host
       - RUN: >-
           --run-once
@@ -39,7 +40,6 @@ tasks:
           {% set urls = [] %}
           {% for h in   query.values() | map(attribute='rabbitmq_host') | select('defined') | list %}
           {% set _ = urls.append(rabbitmq_default_user ~ ":" ~ rabbitmq_default_pass ~ "@" ~  h ~ ":5672") %}
-
           {% endfor %}
           echo -n "rabbit://{{ urls | join(',') }}/?ssl=0";
 

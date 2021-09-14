@@ -9,6 +9,7 @@ tasks:
       - libvirt.setup
     requires:
       - repos.init
+      - network.init
       - config.init
     jobs:
       - DNF: libvirt libvirt-daemon-kvm libvirt-daemon-driver-qemu

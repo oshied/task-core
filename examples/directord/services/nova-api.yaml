@@ -10,6 +10,7 @@ tasks:
     requires:
       - config.init
       - memcached.init
+      - network.init
     jobs:
       - ARG: nova_region RegionOne
       - ARG: nova_db_username nova

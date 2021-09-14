@@ -9,6 +9,7 @@ tasks:
       - openstack-neutron.init
     requires:
       - config.init
+      - network.init
       - memcached.init
     jobs:
       - ARG: neutron_region RegionOne
@@ -98,7 +99,7 @@ tasks:
           crudini --set /etc/neutron/neutron.conf keystone_authtoken www_authenticate_uri "http://{{ ctlplane_vip }}:5000"
       # TODO(mwhahaha) memcached hosts, also memcache_use_advanced_pool=True?
       - RUN: >-
-          crudini --set /etc/neutron/neutron.conf keystone_authtoken memcached_serverd "{{ neutorn_api_memcached_servers }}"
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken memcached_serverd "{{ neutron_api_memcached_servers }}"
       - RUN: >-
           crudini --set /etc/neutron/neutron.conf keystone_authtoken auth_type password
       - RUN: >-

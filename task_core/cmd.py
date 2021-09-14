@@ -137,8 +137,11 @@ def main():
 
     if not args.noop:
         LOG.info("Starting execution...")
-        result = engines.run(flow, engine="parallel")
+        e = engines.load(flow, executor='threaded', engine="parallel", max_workers=5)
+        e.run()
+        result = e.storage.fetch_all()
         LOG.info("Ran %s tasks...", len(result.keys()))
+        LOG.info("Stats: %s", e.statistics)
     else:
         result = None
         dot = networkx.drawing.nx_pydot.to_pydot(
@@ -150,7 +153,7 @@ def main():
     end = datetime.now()
     LOG.info("Elapsed time: %s", end - start)
     LOG.info("Done...")
-    pprint.pprint(result)
+    LOG.debug(result)
 
 
 def example():

@@ -8,7 +8,8 @@ tasks:
     provides:
       - openstack-neutron-dhcp.setup
     requires:
-      - openstack-neutron.setup
+      - network.init
+      - repos.init
     jobs:
       - DNF: openstack-neutron
       - RUN: >-

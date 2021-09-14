@@ -10,6 +10,7 @@ tasks:
     requires:
       - config.init
       - memcached.init
+      - network.init
     jobs:
       - ARG: placement_region RegionOne
       - ARG: placement_db_username placement
@@ -49,7 +50,7 @@ tasks:
           crudini --set /etc/placement/placement.conf keystone_authtoken auth_url "http://{{ ctlplane_vip }}:5000"
       # TODO(mwhahaha) memcached hosts
       - RUN: >-
-          crudini --set /etc/placement/placement.conf keystone_authtoken memcached_servers "{{ placement_mecached_servers }}"
+          crudini --set /etc/placement/placement.conf keystone_authtoken memcached_servers "{{ placement_memcached_servers}}"
       - RUN: >-
           crudini --set /etc/placement/placement.conf keystone_authtoken auth_type password
       - RUN: >-

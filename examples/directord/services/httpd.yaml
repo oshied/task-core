@@ -9,6 +9,7 @@ tasks:
       - httpd.init
     requires:
       - hostname.init
+      - network.init
       - repos.init
     jobs:
       - DNF: httpd python3-mod_wsgi

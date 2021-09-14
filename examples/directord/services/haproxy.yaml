@@ -8,8 +8,8 @@ tasks:
     provides:
       - haproxy.init
     requires:
-      - network.init
       - config.init
+      - network.init
       - repos.init
     jobs:
       - DNF: haproxy

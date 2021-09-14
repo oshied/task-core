@@ -9,6 +9,7 @@ tasks:
       - openstack-swift-proxy.init
     requires:
       - config.init
+      - network.init
       - memcached.init
     jobs:
       - ARG: swift_region RegionOne

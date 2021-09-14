@@ -9,6 +9,7 @@ tasks:
       - openstack-keystone.init
     requires:
       - config.init
+      - network.init
     jobs:
       - ARG: keystone_region RegionOne
       - ARG: keystone_db_username keystone

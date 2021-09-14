@@ -9,6 +9,7 @@ tasks:
       - openstack-swift-storage.init
     requires:
       - config.init
+      - network.init
     jobs:
       - ARG: swift_region RegionOne
       - ARG: swift_admin_pass swift

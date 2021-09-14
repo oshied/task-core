@@ -139,9 +139,14 @@ class DirectordTask(ServiceTask):
             if status is True:
                 success.append(job)
             elif status is False:
-                # TODO(mwhahaha): handle failures
                 LOG.error("%s | Job %s failed. %s", self, job, info)
                 failure.append(job)
+                # TODO(mwhahaha): handle failures
+                raise ExecutionFailed(
+                    "{} | Directord job execution failed {}".format(
+                        self, ", ".join(failure)
+                    )
+                )
             else:
                 pending.append(job)
                 time.sleep(0.1)
