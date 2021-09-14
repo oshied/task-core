@@ -8,7 +8,6 @@ tasks:
     provides:
       - openvswitch.init
     requires:
-      - config.init
       - repos.init
     jobs:
       - DNF: openvswitch

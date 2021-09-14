@@ -9,17 +9,22 @@ tasks:
       - openstack-cinder.init
     requires:
       - config.init
-      # provides mysql_root_password
-      - mariadb.init
-      - rabbitmq.config
+      - memcached.init
     jobs:
       - ARG: cinder_region RegionOne
       - ARG: cinder_db_username cinder
       - ARG: cinder_db_password secrete
-      - RUN: --stdout-arg cinder_db_host echo "{{ ctlplane_vip }}"
+      - ARG: cinder_db_host "{{ ctlplane_vip }}"
       - ARG: cinder_db_name cinder
       - ARG: cinder_admin_pass cinder
-      - QUERY: rabbitmq_transport_url
+      - QUERY: memcache_host_ip
+      - RUN: >-
+          --stdout-arg cinder_api_memcached_servers
+          {% set hosts = [] %}
+          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | list %}
+          {% set _ = hosts.append(h ~ ":11211") %}
+          {% endfor %}
+          echo -n "{{ hosts | join(',') }}";
 
   - id: setup
     action: setup
@@ -28,10 +33,12 @@ tasks:
       - openstack-cinder.setup
     requires:
       - config.init
-      - openstack-cinder.init
-      - repos.init
       - httpd.init
+      - openstack-cinder.init
+      - rabbitmq.config
+      - repos.init
     jobs:
+      - QUERY: rabbitmq_transport_url
       - DNF: openstack-cinder
       - RUN: echo "# file managed elsewhere" > /etc/httpd/conf.d/00-cinder-api.conf
       - RUN: >-
@@ -43,9 +50,8 @@ tasks:
           crudini --set /etc/cinder/cinder.conf api auth_strategy keystone
       - RUN: >-
           crudini --set /etc/cinder/cinder.conf keystone_authtoken auth_url "http://{{ ctlplane_vip }}:5000"
-      # TODO(mwhahaha) memcached hosts
       - RUN: >-
-          crudini --set /etc/cinder/cinder.conf keystone_authtoken memcached_server "127.0.0.1:11211"
+          crudini --set /etc/cinder/cinder.conf keystone_authtoken memcached_servers "{{ cinder_api_memcached_servers }}"
       - RUN: >-
           crudini --set /etc/cinder/cinder.conf keystone_authtoken auth_type password
       - RUN: >-

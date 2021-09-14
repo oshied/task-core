@@ -11,7 +11,6 @@ tasks:
       - config.init
     jobs:
       - ARG: neutron_metadata_secret metadatasecrete
-      - QUERY: neutron_metadata_secret
 
   - id: setup
     action: setup
@@ -30,7 +29,7 @@ tasks:
       - RUN: >-
           crudini --set /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_protocol http
       - RUN: >-
-          crudini --set /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret "{{ query.values() | map(attribute='neutron_metadata_secret') | select('defined') | list | first }}"
+          crudini --set /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret "{{ neutron_metadata_secret }}"
       - RUN: >-
           crudini --set /etc/neutron/metadata_agent.ini DEFAULT metadata_workers 2
 

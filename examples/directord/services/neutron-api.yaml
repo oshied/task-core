@@ -9,17 +9,22 @@ tasks:
       - openstack-neutron.init
     requires:
       - config.init
-      # provides mysql_root_password
-      - mariadb.init
-      - rabbitmq.config
+      - memcached.init
     jobs:
       - ARG: neutron_region RegionOne
       - ARG: neutron_db_username neutron
       - ARG: neutron_db_password secrete
-      - RUN: --stdout-arg neutron_db_host echo "{{ ctlplane_vip }}"
+      - ARG: neutron_db_host "{{ ctlplane_vip }}"
       - ARG: neutron_db_name neutron
       - ARG: neutron_admin_pass neutron
-      - QUERY: rabbitmq_transport_url
+      - QUERY: memcache_host_ip
+      - RUN: >-
+          --stdout-arg neutron_api_memcached_servers
+          {% set hosts = [] %}
+          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | list %}
+          {% set _ = hosts.append(h ~ ":11211") %}
+          {% endfor %}
+          echo -n "{{ hosts | join(',') }}";
 
   - id: setup
     action: setup
@@ -31,8 +36,10 @@ tasks:
       - openstack-neutron.init
       - openstack-nova.init
       - openstack-placement.init
+      - rabbitmq.config
       - repos.init
     jobs:
+      - QUERY: rabbitmq_transport_url
       - DNF: openstack-neutron
       - RUN: >-
           crudini --set /etc/neutron/neutron.conf DEFAULT debug True
@@ -91,7 +98,7 @@ tasks:
           crudini --set /etc/neutron/neutron.conf keystone_authtoken www_authenticate_uri "http://{{ ctlplane_vip }}:5000"
       # TODO(mwhahaha) memcached hosts, also memcache_use_advanced_pool=True?
       - RUN: >-
-          crudini --set /etc/neutron/neutron.conf keystone_authtoken memcached_server "127.0.0.1:11211"
+          crudini --set /etc/neutron/neutron.conf keystone_authtoken memcached_serverd "{{ neutorn_api_memcached_servers }}"
       - RUN: >-
           crudini --set /etc/neutron/neutron.conf keystone_authtoken auth_type password
       - RUN: >-

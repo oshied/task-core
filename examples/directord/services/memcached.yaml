@@ -11,8 +11,7 @@ tasks:
       - config.init
       - repos.init
     jobs:
-      - RUN: --stdout-arg memcache_host_ip echo -n "{{ tripleo_network_ips[deployment_host] }}"
-      - QUERY: memcache_host_ip
+      - ARG: memcache_host_ip "{{ tripleo_network_ips[deployment_host] }}"
 
   - id: setup
     action: run

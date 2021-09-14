@@ -9,8 +9,9 @@ tasks:
       - keepalived.init
     requires:
       - config.init
-      - repos.init
+      - hostname.init
       - network.init
+      - repos.init
     jobs:
       - DNF: keepalived
       - ADD: >

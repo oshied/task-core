@@ -8,7 +8,8 @@ tasks:
     provides:
       - httpd.init
     requires:
-      - config.init
+      - hostname.init
+      - repos.init
     jobs:
       - DNF: httpd python3-mod_wsgi
       - RUN: >-

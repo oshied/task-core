@@ -10,15 +10,15 @@ tasks:
     requires:
       - config.init
       - memcached.init
-      - rabbitmq.config
     jobs:
       - ARG: nova_region RegionOne
       - ARG: nova_db_username nova
       - ARG: nova_db_password secrete
-      - RUN: --stdout-arg nova_db_host echo "{{ ctlplane_vip }}"
+      - ARG: nova_db_host "{{ ctlplane_vip }}"
       - ARG: nova_db_name nova
       - ARG: nova_api_db_name nova_api
       - ARG: nova_admin_pass nova
+      - QUERY: memcache_host_ip
       - RUN: >-
           --stdout-arg nova_api_memcached_servers
           {% set hosts = [] %}
@@ -26,7 +26,6 @@ tasks:
           {% set _ = hosts.append(h ~ ":11211") %}
           {% endfor %}
           echo -n "{{ hosts | join(',') }}";
-      - QUERY: rabbitmq_transport_url
 
 
   - id: setup
@@ -36,12 +35,14 @@ tasks:
       - openstack-nova.setup
     requires:
       - config.init
+      - httpd.init
       - openstack-cinder.init
       - openstack-nova.init
       - openstack-placement.init
+      - rabbitmq.config
       - repos.init
-      - httpd.init
     jobs:
+      - QUERY: rabbitmq_transport_url
       - DNF: openstack-nova-api openstack-nova-conductor openstack-nova-novncproxy openstack-nova-scheduler
       - RUN: >-
           crudini --set /etc/nova/nova.conf database connection

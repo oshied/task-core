@@ -18,5 +18,7 @@ tasks:
     driver: directord
     provides:
       - kernel-args.init
+    requires:
+      - config.init
     jobs:
       - RUN: echo "Do Kernel Arg Stuff"

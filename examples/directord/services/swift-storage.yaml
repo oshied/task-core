@@ -12,8 +12,7 @@ tasks:
     jobs:
       - ARG: swift_region RegionOne
       - ARG: swift_admin_pass swift
-      - RUN: --stdout-arg swift_storage_host_ip echo -n "{{ tripleo_network_ips[deployment_host] }}"
-      - QUERY: swift_storage_host_ip
+      - ARG: swift_storage_host_ip "{{ tripleo_network_ips[deployment_host] }}"
 
   - id: rsyncd-setup
     action: rsyncd-setup
@@ -39,7 +38,7 @@ tasks:
     jobs:
       - DNF: openstack-swift-account
       - RUN: >-
-          crudini --set /etc/swift/account-server.conf DEFAULT bind_ip "{{ tripleo_network_ips[deployment_host] }}"
+          crudini --set /etc/swift/account-server.conf DEFAULT bind_ip "{{ swift_storage_host_ip }}"
       - RUN: >-
           crudini --set /etc/swift/account-server.conf DEFAULT bind_port 6002
       - RUN: >-

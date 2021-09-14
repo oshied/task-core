@@ -12,7 +12,6 @@ tasks:
       - mysql_client.init
     jobs:
       - ARG: mysql_root_password SuperSecrete
-      - RUN: --stdout-arg director_hostname hostname
       - DNF: mariadb mariadb-server
       - RUN: >-
           crudini --set /etc/my.cnf.d/mariadb-server.cnf server skip-name-resolve 1
@@ -62,12 +61,3 @@ tasks:
     jobs:
       - RUN: systemctl enable mariadb.service
       - RUN: systemctl start mariadb.service
-#
-#  - id: available
-#    action: run
-#    driver: directord
-#    providers:
-#      - mariadb.available
-#    requires:
-#      - mariadb.staart
-#      - RUN:

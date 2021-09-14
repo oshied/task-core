@@ -9,15 +9,23 @@ tasks:
       - openstack-placement.init
     requires:
       - config.init
-      # provides mysql_root_password
-      - mariadb.init
+      - memcached.init
     jobs:
       - ARG: placement_region RegionOne
       - ARG: placement_db_username placement
       - ARG: placement_db_password secrete
-      - RUN: --stdout-arg placement_db_host echo "{{ ctlplane_vip }}"
+      - ARG: placement_db_host "{{ ctlplane_vip }}"
       - ARG: placement_db_name placement
       - ARG: placement_admin_pass placement
+      - QUERY: memcache_host_ip
+      - RUN: >-
+          --stdout-arg placement_memcached_servers
+          {% set hosts = [] %}
+          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | list %}
+          {% set _ = hosts.append(h ~ ":11211") %}
+          {% endfor %}
+          echo -n "{{ hosts | join(',') }}";
+
 
   - id: setup
     action: setup
@@ -41,7 +49,7 @@ tasks:
           crudini --set /etc/placement/placement.conf keystone_authtoken auth_url "http://{{ ctlplane_vip }}:5000"
       # TODO(mwhahaha) memcached hosts
       - RUN: >-
-          crudini --set /etc/placement/placement.conf keystone_authtoken memcached_server "127.0.0.1:11211"
+          crudini --set /etc/placement/placement.conf keystone_authtoken memcached_servers "{{ placement_mecached_servers }}"
       - RUN: >-
           crudini --set /etc/placement/placement.conf keystone_authtoken auth_type password
       - RUN: >-

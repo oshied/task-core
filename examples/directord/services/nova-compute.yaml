@@ -22,6 +22,8 @@ tasks:
       - QUERY: neutron_admin_pass
       - QUERY: nova_admin_pass
       - QUERY: placement_admin_pass
+      - QUERY: rabbitmq_transport_url
+      - QUERY: memcache_host_ip
       - RUN: >-
           --stdout-arg nova_compute_memcached_servers
           {% set hosts = [] %}
@@ -29,7 +31,6 @@ tasks:
           {% set _ = hosts.append(h ~ ":11211") %}
           {% endfor %}
           echo -n "{{ hosts | join(',') }}";
-      - QUERY: rabbitmq_transport_url
 
   - id: setup
     action: setup

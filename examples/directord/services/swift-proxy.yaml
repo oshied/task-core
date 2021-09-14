@@ -9,13 +9,21 @@ tasks:
       - openstack-swift-proxy.init
     requires:
       - config.init
-      # provides mysql_root_password
-      - mariadb.init
+      - memcached.init
     jobs:
       - ARG: swift_region RegionOne
       - ARG: swift_admin_pass swift
       - ARG: swift_hash_path_suffix Gb0pinPGbyl8YpRBI9d6eL5C3
       - ARG: swift_hash_path_prefix ""
+      - QUERY: memcache_host_ip
+      - RUN: >-
+          --stdout-arg swift_memcached_servers
+          {% set hosts = [] %}
+          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | list %}
+          {% set _ = hosts.append(h ~ ":11211") %}
+          {% endfor %}
+          echo -n "{{ hosts | join(',') }}";
+
 
   - id: setup
     action: setup
@@ -24,10 +32,8 @@ tasks:
       - openstack-swift-proxy.setup
     requires:
       - config.init
-      - openstack-swift-proxy.init
-      - rabbitmq.config
       - repos.init
-      - httpd.init
+      - openstack-swift-proxy.init
     jobs:
       - DNF: openstack-swift-proxy python3-swiftclient python3-keystoneclient python3-keystonemiddleware memcached
       - RUN: >-
@@ -40,9 +46,8 @@ tasks:
           crudini --set /etc/swift/proxy-server.conf DEFAULT log_level DEBUG
       - RUN: >-
           crudini --set /etc/swift/proxy-server.conf "pipeline:main" pipeline "catch_errors gatekeeper healthcheck proxy-logging cache listing_formats ratelimit bulk tempurl formpost authtoken s3api s3token keystone staticweb copy container-quotas account-quotas slo dlo versioned_writes proxy-logging proxy-server"
-      # TODO(mwhahaha) memcached hosts
       - RUN: >-
-          crudini --set /etc/swift/proxy-server.conf "filter:cache" memcache_servers "127.0.0.1:11211"
+          crudini --set /etc/swift/proxy-server.conf "filter:cache" memcache_servers "{{ swift_memcached_servers }}"
       - RUN: >-
           crudini --set /etc/swift/proxy-server.conf "filter:cache" memcached_max_connections 2
       - RUN: >-
@@ -154,6 +159,7 @@ tasks:
       - openstack-swift-proxy.service
     requires:
       - openstack-swift-proxy.keystone
+      - openstack-swift-ringbuilder.ring-sync
     jobs:
       - RUN: --skip-cache systemctl enable openstack-swift-proxy.service
       - RUN: --skip-cache systemctl restart openstack-swift-proxy.service

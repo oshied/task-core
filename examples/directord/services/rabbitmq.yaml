@@ -31,7 +31,7 @@ tasks:
       - ARG: rabbitmq_ctl_dist_port_max 25683
       - ARG: rabbitmq_ctl_dist_port_min 25673
       - ARG: rabbitmq_cluster_name openstack_cluster
-      - RUN: --stdout-arg rabbitmq_host hostname -s
+      - ARG: rabbitmq_host hostname "{{ deployment_host }}"
       - QUERY: rabbitmq_host
       - RUN: >-
           --run-once
@@ -94,8 +94,6 @@ tasks:
       - RUN: --run-once bash /var/lib/rabbitmq/rabbitmq_bootstrap.sh
       - RUN: --run-once --stdout-arg rabbitmq_bootstrap_node cat /var/lib/rabbitmq/.rabbitmq_bootstrap
 
-      - QUERY: rabbitmq_bootstrap_node
-
   - id: service
     action: run
     driver: directord
@@ -105,7 +103,8 @@ tasks:
       - rabbitmq.bootstrap
       - rabbitmq.config
     jobs:
-      - RUN: --stdout-arg rabbitmq_bootstrap_node echo "{{ query.values() | map(attribute='rabbitmq_bootstrap_node') | select('defined') | list | first }}"
+      - QUERY: rabbitmq_bootstrap_node
+      - ARG: rabbitmq_bootstrap_node "{{ query.values() | map(attribute='rabbitmq_bootstrap_node') | select('defined') | list | first }}"
       - ADD: >
           --blueprint files/rabbitmq/rabbitmq_setup.sh.j2
           /var/lib/rabbitmq/rabbitmq_setup.sh

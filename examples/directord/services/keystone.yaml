@@ -9,13 +9,11 @@ tasks:
       - openstack-keystone.init
     requires:
       - config.init
-      # provides mysql_root_password
-      - mariadb.init
     jobs:
       - ARG: keystone_region RegionOne
       - ARG: keystone_db_username keystone
       - ARG: keystone_db_password secrete
-      - RUN: --stdout-arg keystone_db_host echo "{{ ctlplane_vip }}"
+      - ARG: keystone_db_host "{{ ctlplane_vip }}"
       - ARG: keystone_db_name keystone
       - ARG: keystone_admin_pass keystone
       - ARG: keystone_fernet_key_0 BdoObZyvFgpawyIBnCEs6ej1bIr_xZwm2q6f_32KmlU=

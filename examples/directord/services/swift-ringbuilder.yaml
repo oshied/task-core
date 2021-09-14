@@ -8,8 +8,9 @@ tasks:
     provides:
       - openstack-swift-ringbuilder.init
     requires:
-      - openstack-swift-proxy.setup
       - config.init
+      - openstack-swift-proxy.setup
+      - openstack-swift-storage.init
       - repos.init
     jobs:
       - DNF: python3-swift
@@ -17,7 +18,6 @@ tasks:
       - ARG: swift_storage_part_power 10
       - ARG: swift_storage_part_replicas 1
       - ARG: swift_storage_part_min_part_hours 1
-      - RUN: --stdout-arg swift_storage_host_ip echo -n "{{ tripleo_network_ips[deployment_host] }}"
       - QUERY: swift_storage_host_ip
 
   - id: account-ring

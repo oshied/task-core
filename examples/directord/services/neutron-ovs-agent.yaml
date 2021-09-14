@@ -8,10 +8,10 @@ tasks:
     provides:
       - openstack-neutron-ovs-agent.init
     requires:
+      - config.init
       - openstack-neutron.setup
     jobs:
-      - ARG: neutron_metadata_secret metadatasecrete
-      - QUERY: neutron_metadata_secret
+      - ARG: ovs_local_ip "{{ tripleo_network_ips[deployment_host] }}"
 
   - id: setup
     action: setup
@@ -32,7 +32,7 @@ tasks:
       - RUN: >-
           crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs tunnel_bridge br-tun
       - RUN: >-
-          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip "{{ tripleo_network_ips[deployment_host] }}"
+          crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip "{{ ovs_local_ip }}"
       - RUN: >-
           crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population False
       - RUN: >-

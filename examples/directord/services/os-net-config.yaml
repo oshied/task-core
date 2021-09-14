@@ -7,7 +7,6 @@ tasks:
     driver: directord
     provides:
       - network.init
-    # we need the hostname value for use int he config render
     requires:
       - config.init
       - repos.init
