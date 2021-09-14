@@ -32,7 +32,7 @@ path is assumed for future commands.
 ```
 # Build task-core
 mkdir -p ~/rpmbuild/SOURCES
-sudo dnf -y install yum-utils rpm-build dnf-plugins-core
+sudo dnf -y install yum-utils rpm-build dnf-plugins-core python3-pbr
 git clone https://github.com/mwhahaha/task-core
 
 pushd ~/task-core/
@@ -42,7 +42,7 @@ python3 setup.py sdist
 cp dist/task-core-*.tar.gz ~/rpmbuild/SOURCES/
 # Adjust version as necessary
 VER="$(ls dist/ | cut -d '-' -f 3 | sed 's/.tar.gz//' | sort -nr | head -1)"
-rpmbuild -ba --define "released_version $VER" contrib/task-core.spec 
+rpmbuild -ba --define "released_version $VER" contrib/task-core.spec
 sudo dnf -y localinstall ~/rpmbuild/RPMS/noarch/*${VER}*.rpm || sudo dnf -y update ~/rpmbuild/RPMS/noarch/*${VER}*.rpm
 popd
 ```
@@ -53,9 +53,25 @@ sudo iptables -F
 ```
 # Grab "Upload RPM artifact"
 
-Fetch from https://github.com/cloudnull/directord/actions/runs/1217478011 and extract to ~/directord/
-```
-sudo dnf localinstall -y ~/directord/python3-*.noarch.rpm ~/directord/python3-ssh2-python-0.26.0-1.el8.x86_64.rpm
+Fetch the latest stable Directord RPMS
+``` shell
+function get_latest_release() {
+  curl --silent "https://api.github.com/repos/$1/releases/latest" |
+    grep '"tag_name":' |
+    sed -E 's/.*"([^"]+)".*/\1/'
+}
+
+rm -f rpm-bundle.tar.gz
+rm -rf rpm-bundle
+
+sudo dnf install -y wget
+RELEASE="$(get_latest_release cloudnull/directord)"
+mkdir rpm-bundle
+pushd rpm-bundle
+  wget https://github.com/cloudnull/directord/releases/download/${RELEASE}/rpm-bundle.tar.gz
+  tar xf rpm-bundle.tar.gz
+  sudo dnf localinstall -y $(ls -1 *.rpm | egrep -v '(src|debug)') || sudo dnf -y update $(ls -1 *.rpm | egrep -v '(src|debug)')
+popd
 ```
 
 # setup ansible.cfg to help with bootstrapping
