@@ -148,7 +148,7 @@ def process_run_task(kargs, uargs, tasks):
     return data
 
 
-def process_arg_task(kargs, uargs):
+def process_arg_task(uargs):
     # handle quoted vars which ned to be unquoted when we convert
     val = [v.strip('"') for v in uargs[1:]]
     data = {
@@ -224,7 +224,7 @@ def process_directord_jobs(
         elif action == "RUN":
             data = process_run_task(kargs, uargs, ansible_tasks)
         elif action == "ARG":
-            data = process_arg_task(kargs, uargs)
+            data = process_arg_task(uargs)
         elif action == "QUERY":
             data = process_query_task(uargs)
         elif action == "DNF":
@@ -299,15 +299,14 @@ class PlaybookWriter:
         self._playbook_path = os.path.join(playbook_path, playbook_name)
         # we need to set query to an empty dict because query in ansible
         # is leaked Template object
-        self._plays = [{
-            "hosts": "all",
-            "tasks": [{
-                "name": "setup vars",
-                "ansible.builtin.set_fact": {
-                    "query": {}
-                }
-            }]
-        }]
+        self._plays = [
+            {
+                "hosts": "all",
+                "tasks": [
+                    {"name": "setup vars", "ansible.builtin.set_fact": {"query": {}}}
+                ],
+            }
+        ]
         self._current_play = None
         self._current_hosts = None
 

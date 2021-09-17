@@ -137,7 +137,7 @@ def main():
 
     if not args.noop:
         LOG.info("Starting execution...")
-        e = engines.load(flow, executor='threaded', engine="parallel", max_workers=5)
+        e = engines.load(flow, executor="threaded", engine="parallel", max_workers=5)
         e.run()
         result = e.storage.fetch_all()
         LOG.info("Ran %s tasks...", len(result.keys()))
