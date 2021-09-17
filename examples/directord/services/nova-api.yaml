@@ -23,7 +23,7 @@ tasks:
       - RUN: >-
           --stdout-arg nova_api_memcached_servers
           {% set hosts = [] %}
-          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | list %}
+          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | reject('==', None) | list %}
           {% set _ = hosts.append(h ~ ":11211") %}
           {% endfor %}
           echo -n "{{ hosts | join(',') }}";
@@ -52,7 +52,7 @@ tasks:
           crudini --set /etc/nova/nova.conf api_database connection
           "mysql+pymysql://{{ nova_db_username }}:{{ nova_db_password }}@{{ nova_db_host }}/{{ nova_api_db_name }}?read_default_file=/etc/my.cnf.d/tripleo.cnf&read_default_group=tripleo"
       - RUN: >-
-          crudini --set /etc/nova/nova.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | list | first }}"
+          crudini --set /etc/nova/nova.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | reject('==', None) | list | first }}"
       - RUN: >-
           crudini --set /etc/nova/nova.conf api auth_strategy keystone
       - RUN: >-

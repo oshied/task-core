@@ -22,7 +22,7 @@ tasks:
       - RUN: >-
           --stdout-arg placement_memcached_servers
           {% set hosts = [] %}
-          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | list %}
+          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | reject('==', None) | list %}
           {% set _ = hosts.append(h ~ ":11211") %}
           {% endfor %}
           echo -n "{{ hosts | join(',') }}";

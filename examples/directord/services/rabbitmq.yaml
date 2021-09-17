@@ -38,7 +38,7 @@ tasks:
           --run-once
           --stdout-arg rabbitmq_transport_url
           {% set urls = [] %}
-          {% for h in   query.values() | map(attribute='rabbitmq_host') | select('defined') | list %}
+          {% for h in   query.values() | map(attribute='rabbitmq_host') | select('defined') | reject('==', None) | list %}
           {% set _ = urls.append(rabbitmq_default_user ~ ":" ~ rabbitmq_default_pass ~ "@" ~  h ~ ":5672") %}
           {% endfor %}
           echo -n "rabbit://{{ urls | join(',') }}/?ssl=0";
@@ -104,7 +104,7 @@ tasks:
       - rabbitmq.config
     jobs:
       - QUERY: rabbitmq_bootstrap_node
-      - ARG: rabbitmq_bootstrap_node "{{ query.values() | map(attribute='rabbitmq_bootstrap_node') | select('defined') | list | first }}"
+      - ARG: rabbitmq_bootstrap_node "{{ query.values() | map(attribute='rabbitmq_bootstrap_node') | select('defined') | reject('==', None) | list | first }}"
       - ADD: >
           --blueprint files/rabbitmq/rabbitmq_setup.sh.j2
           /var/lib/rabbitmq/rabbitmq_setup.sh

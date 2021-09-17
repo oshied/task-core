@@ -22,7 +22,7 @@ tasks:
       - RUN: >-
           --stdout-arg cinder_api_memcached_servers
           {% set hosts = [] %}
-          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | list %}
+          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | reject('==', None) | list %}
           {% set _ = hosts.append(h ~ ":11211") %}
           {% endfor %}
           echo -n "{{ hosts | join(',') }}";
@@ -46,7 +46,7 @@ tasks:
           crudini --set /etc/cinder/cinder.conf database connection
           "mysql+pymysql://{{ cinder_db_username }}:{{ cinder_db_password }}@{{ cinder_db_host }}/{{ cinder_db_name }}?read_default_file=/etc/my.cnf.d/tripleo.cnf&read_default_group=tripleo"
       - RUN: >-
-          crudini --set /etc/cinder/cinder.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | list | first }}"
+          crudini --set /etc/cinder/cinder.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | reject('==', None) | list | first }}"
       - RUN: >-
           crudini --set /etc/cinder/cinder.conf api auth_strategy keystone
       - RUN: >-

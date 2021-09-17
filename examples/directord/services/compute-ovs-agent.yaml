@@ -24,7 +24,7 @@ tasks:
       - DNF: openstack-neutron-openvswitch
       - QUERY: rabbitmq_transport_url
       - RUN: >-
-          crudini --set /etc/neutron/neutron.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | list | first }}"
+          crudini --set /etc/neutron/neutron.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | reject('==', None) | list | first }}"
       - RUN: >-
           crudini --set /etc/neutron/neutron.conf DEFAULT control_exchange neutron
       - RUN: >-

@@ -31,7 +31,7 @@ tasks:
     jobs:
       - RUN: >-
           --run-once
-          SWIFT_HOSTS="{{ query.values() | map(attribute='swift_storage_host_ip') | select('defined') | list | join(' ') }}"
+          SWIFT_HOSTS="{{ query.values() | map(attribute='swift_storage_host_ip') | select('defined') | reject('==', None) | list | join(' ') }}"
           SWIFT_PORT="6002"
           /etc/swift/ringbuilder.sh account
       - RUN: >-
@@ -55,7 +55,7 @@ tasks:
     jobs:
       - RUN: >-
           --run-once
-          SWIFT_HOSTS="{{ query.values() | map(attribute='swift_storage_host_ip') | select('defined') | list | join(' ') }}"
+          SWIFT_HOSTS="{{ query.values() | map(attribute='swift_storage_host_ip') | select('defined') | reject('==', None) | list | join(' ') }}"
           SWIFT_PORT="6001"
           /etc/swift/ringbuilder.sh container
       - RUN: >-
@@ -79,7 +79,7 @@ tasks:
     jobs:
       - RUN: >-
           --run-once
-          SWIFT_HOSTS="{{ query.values() | map(attribute='swift_storage_host_ip') | select('defined') | list | join(' ') }}"
+          SWIFT_HOSTS="{{ query.values() | map(attribute='swift_storage_host_ip') | select('defined') | reject('==', None) | list | join(' ') }}"
           SWIFT_PORT="6000"
           /etc/swift/ringbuilder.sh object
       - RUN: >-
@@ -105,15 +105,15 @@ tasks:
     jobs:
       - RUN: >-
           if ! test -f /etc/swift/account.ring.gz; then
-              echo "{{ query.values() | map(attribute='swift_storage_account_ring_base64') | select('defined') | list | first }}" | base64 -d > /etc/swift/account.ring.gz;
+              echo "{{ query.values() | map(attribute='swift_storage_account_ring_base64') | select('defined') | reject('==', None) | list | first }}" | base64 -d > /etc/swift/account.ring.gz;
           fi;
       - RUN: >-
           if ! test -f /etc/swift/container.ring.gz; then
-              echo "{{ query.values() | map(attribute='swift_storage_container_ring_base64') | select('defined') | list | first }}" | base64 -d > /etc/swift/container.ring.gz;
+              echo "{{ query.values() | map(attribute='swift_storage_container_ring_base64') | select('defined') | reject('==', None) | list | first }}" | base64 -d > /etc/swift/container.ring.gz;
           fi;
       - RUN: >-
           if ! test -f /etc/swift/object.ring.gz; then
-              echo "{{ query.values() | map(attribute='swift_storage_object_ring_base64') | select('defined') | list | first }}" | base64 -d > /etc/swift/object.ring.gz;
+              echo "{{ query.values() | map(attribute='swift_storage_object_ring_base64') | select('defined') | reject('==', None) | list | first }}" | base64 -d > /etc/swift/object.ring.gz;
           fi;
 
 

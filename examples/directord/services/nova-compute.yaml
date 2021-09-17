@@ -28,7 +28,7 @@ tasks:
       - RUN: >-
           --stdout-arg nova_compute_memcached_servers
           {% set hosts = [] %}
-          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | list %}
+          {% for h in   query.values() | map(attribute='memcache_host_ip') | select('defined') | reject('==', None) | list %}
           {% set _ = hosts.append(h ~ ":11211") %}
           {% endfor %}
           echo -n "{{ hosts | join(',') }}";
@@ -48,7 +48,7 @@ tasks:
       - RUN: >-
           crudini --set /etc/nova/nova.conf DEFAULT debug True
       - RUN: >-
-          crudini --set /etc/nova/nova.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | list | first }}"
+          crudini --set /etc/nova/nova.conf DEFAULT transport_url "{{ query.values() | map(attribute='rabbitmq_transport_url') | select('defined') | reject('==', None) | list | first }}"
       - RUN: >-
           crudini --set /etc/nova/nova.conf DEFAULT my_ip "{{ tripleo_network_ips[deployment_host] }}"
       - RUN: >-
@@ -78,7 +78,7 @@ tasks:
       - RUN: >-
           crudini --set /etc/nova/nova.conf keystone_authtoken username nova
       - RUN: >-
-          crudini --set /etc/nova/nova.conf keystone_authtoken password "{{ query.values() | map(attribute='nova_admin_pass') | select('defined') | list | first }}"
+          crudini --set /etc/nova/nova.conf keystone_authtoken password "{{ query.values() | map(attribute='nova_admin_pass') | select('defined') | reject('==', None) | list | first }}"
       - RUN: >-
           crudini --set /etc/nova/nova.conf vnc enabled true
       - RUN: >-
@@ -116,7 +116,7 @@ tasks:
       - RUN: >-
           crudini --set /etc/nova/nova.conf cinder username cinder
       - RUN: >-
-          crudini --set /etc/nova/nova.conf cinder password "{{ query.values() | map(attribute='cinder_admin_pass') | select('defined') | list | first }}"
+          crudini --set /etc/nova/nova.conf cinder password "{{ query.values() | map(attribute='cinder_admin_pass') | select('defined') | reject('==', None) | list | first }}"
       # neutron
       - RUN: >-
           crudini --set /etc/nova/nova.conf neutron ovs_bridge br-int
@@ -137,7 +137,7 @@ tasks:
       - RUN: >-
           crudini --set /etc/nova/nova.conf neutron username neutron
       - RUN: >-
-          crudini --set /etc/nova/nova.conf neutron password "{{ query.values() | map(attribute='neutron_admin_pass') | select('defined') | list | first }}"
+          crudini --set /etc/nova/nova.conf neutron password "{{ query.values() | map(attribute='neutron_admin_pass') | select('defined') | reject('==', None) | list | first }}"
       # placement
       - RUN: >-
           crudini --set /etc/nova/nova.conf placement region_name RegionOne
@@ -154,7 +154,7 @@ tasks:
       - RUN: >-
           crudini --set /etc/nova/nova.conf placement username placement
       - RUN: >-
-          crudini --set /etc/nova/nova.conf placement password "{{ query.values() | map(attribute='placement_admin_pass') | select('defined') | list | first }}"
+          crudini --set /etc/nova/nova.conf placement password "{{ query.values() | map(attribute='placement_admin_pass') | select('defined') | reject('==', None) | list | first }}"
       # glance
       - RUN: >-
           crudini --set /etc/nova/nova.conf glance api_servers "http://{{ ctlplane_vip }}:9292"
