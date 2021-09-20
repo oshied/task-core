@@ -14,5 +14,5 @@ tasks:
       - SERVICE: --restarted --enable openvswitch
       # for some reason ovs isn't starting correctly, let's hack in a retry
       - RUN: >-
-        if ! pgrep ovs-vswitchd >/dev/null ; then systemctl restart opvenswitch; fi
+          if ! pgrep ovs-vswitchd >/dev/null ; then systemctl restart opvenswitch; fi
 
