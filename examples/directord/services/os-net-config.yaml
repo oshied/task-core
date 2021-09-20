@@ -17,7 +17,7 @@ tasks:
       - ADD: >
           --blueprint files/os-net-config/os-net-config.yaml.j2 /etc/os-net-config.yaml
           --chown root
-      - RUN: os-net-config -c /etc/os-net-config.yaml -v --debug 2>&1 >> /var/log/os-net-config.log
+      - RUN: os-net-config -c /etc/os-net-config.yaml -v
       # TODO(mwhahaha): handle missing resolvers for now
       - RUN: >-
           {% for h in tripleo_dns_servers %}
