@@ -184,9 +184,9 @@ def process_service_task(kargs, uargs):
     else:
         state = "started"
     data = {"ansible.builtin.service": {"name": uargs, "state": state}}
-    if kargs.enabled:
+    if kargs.enable:
         data["ansible.builtin.service"]["enabled"] = True
-    elif kargs.disabled:
+    elif kargs.disable:
         data["ansible.builtin.service"]["enabled"] = False
     return data
 
