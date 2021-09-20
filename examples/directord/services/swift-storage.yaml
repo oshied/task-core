@@ -22,6 +22,7 @@ tasks:
       - openstack-swift-storage.rsyncd-setup
     requires:
       - config.init
+      - network.init
       - repos.init
     jobs:
       - DNF: rsync rsync-daemon
