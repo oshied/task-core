@@ -176,6 +176,21 @@ def process_query_task(uargs):
     return data
 
 
+def process_service_tasks(kargs, uargs):
+    if kargs.restarted:
+        state = "restarted"
+    elif kargs.stopped:
+        state = "stopped"
+    else:
+        state = "started"
+    data = {"ansible.builtin.service": {"name": uargs, "state": state}}
+    if kargs.enabled:
+        data["ansible.builtin.service"]["enabled"] = True
+    elif kargs.disabled:
+        data["ansible.builtin.service"]["enabled"] = False
+    return data
+
+
 def process_workdir_task(kargs, uargs):
     data = {
         "name": "WORKDIR",
@@ -212,6 +227,10 @@ def process_directord_jobs(
     job_parser.add_argument("--stdout-arg")
     job_parser.add_argument("--chown")
     job_parser.add_argument("--chmod")
+    job_parser.add_argument("--restarted", action="store_true")
+    job_parser.add_argument("--stopped", action="store_true")
+    job_parser.add_argument("--enable", action="store_true")
+    job_parser.add_argument("--disable", action="store_true")
     for job in jobs:
         data = None
         action = next(iter(job))
@@ -227,6 +246,8 @@ def process_directord_jobs(
             data = process_arg_task(uargs)
         elif action == "QUERY":
             data = process_query_task(uargs)
+        elif action == "SERVICE":
+            data = process_service_task(kargs, uargs)
         elif action == "DNF":
             data = {
                 "name": action,
