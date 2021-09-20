@@ -188,7 +188,11 @@ def process_service_task(kargs, uargs, tasks):
         # only add services when we loop
         if data:
             tasks.append(data)
-        data = {"ansible.builtin.service": {"name": svc, "state": state}}
+        data = {
+            "name": "SERVICE",
+            "ansible.builtin.service": {"name": svc, "state": state},
+            "become": True,
+        }
         if kargs.enable:
             data["ansible.builtin.service"]["enabled"] = True
         elif kargs.disable:
