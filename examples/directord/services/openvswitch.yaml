@@ -9,6 +9,7 @@ tasks:
       - openvswitch.init
     requires:
       - repos.init
+      - selinux.init
     jobs:
       - DNF: openvswitch
       - SERVICE: --restarted --enable openvswitch
