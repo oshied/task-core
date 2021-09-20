@@ -176,7 +176,7 @@ def process_query_task(uargs):
     return data
 
 
-def process_service_tasks(kargs, uargs):
+def process_service_task(kargs, uargs):
     if kargs.restarted:
         state = "restarted"
     elif kargs.stopped:
