@@ -13,6 +13,7 @@ tasks:
       - openvswitch.init
       - tripleo_firewall.init
     jobs:
+      - SERVICE: --stopped --disable NetworkManager
       - DNF: os-net-config
       - ADD: >
           --blueprint files/os-net-config/os-net-config.yaml.j2 /etc/os-net-config.yaml
