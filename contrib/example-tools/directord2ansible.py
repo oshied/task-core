@@ -176,18 +176,23 @@ def process_query_task(uargs):
     return data
 
 
-def process_service_task(kargs, uargs):
+def process_service_task(kargs, uargs, tasks):
     if kargs.restarted:
         state = "restarted"
     elif kargs.stopped:
         state = "stopped"
     else:
         state = "started"
-    data = {"ansible.builtin.service": {"name": uargs, "state": state}}
-    if kargs.enable:
-        data["ansible.builtin.service"]["enabled"] = True
-    elif kargs.disable:
-        data["ansible.builtin.service"]["enabled"] = False
+    data = None
+    for svc in uargs:
+        # only add services when we loop
+        if data:
+            tasks.append(data)
+        data = {"ansible.builtin.service": {"name": svc, "state": state}}
+        if kargs.enable:
+            data["ansible.builtin.service"]["enabled"] = True
+        elif kargs.disable:
+            data["ansible.builtin.service"]["enabled"] = False
     return data
 
 
@@ -247,7 +252,7 @@ def process_directord_jobs(
         elif action == "QUERY":
             data = process_query_task(uargs)
         elif action == "SERVICE":
-            data = process_service_task(kargs, uargs)
+            data = process_service_task(kargs, uargs, ansible_tasks)
         elif action == "DNF":
             data = {
                 "name": action,
