@@ -134,5 +134,5 @@ tasks:
       - openstack-cinder.database
       - openstack-cinder.keystone
     jobs:
-      - SERVICE: --restart httpd.service
+      - SERVICE: --restarted httpd.service
 #
