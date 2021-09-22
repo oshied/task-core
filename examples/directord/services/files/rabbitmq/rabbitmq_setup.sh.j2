@@ -2,7 +2,7 @@
 set -ex
 RABBIT_START_TIMEOUT=30
 if [ -s /var/lib/rabbitmq/.rabbitmq_bootstrap ]; then
-    echo "This node was the bootstrap node, skipping seutp"
+    echo "This node was the bootstrap node, skipping setup"
     exit 0
 fi
 
