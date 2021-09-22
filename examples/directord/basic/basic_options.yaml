@@ -3,7 +3,7 @@
 ctlplane_vip: 10.98.0.99
 ctlplane_route: 10.98.0.1
 
-tripleo_dns_servers: ['1.1.1.1', '1.0.0.1']
+tripleo_dns_servers: ['8.8.8.8', '1.1.1.1']
 tripleo_network_ips:
   task-core-1: 10.98.0.3
   task-core-2: 10.98.0.4
