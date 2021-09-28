@@ -11,9 +11,9 @@ tripleo_network_ips:
   task-core-4: 10.98.0.6
   task-core-5: 10.98.0.7
   task-core-6: 10.98.0.8
-  task-core-7: 10.98.0.9
-  task-core-8: 10.98.0.10
-  task-core-9: 10.98.0.11
+# task-core-7: 10.98.0.9
+# task-core-8: 10.98.0.10
+# task-core-9: 10.98.0.11
 tripleo_controller_ips:
   task-core-1: 10.98.0.3
   task-core-2: 10.98.0.4
