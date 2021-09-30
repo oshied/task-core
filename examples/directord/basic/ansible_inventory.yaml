@@ -11,8 +11,8 @@ all:
     novacompute:
       hosts:
         task-core-4: {}
-#       task-core-5: {}
-#       task-core-6: {}
+        task-core-5: {}
+        task-core-6: {}
 #       task-core-7: {}
 #       task-core-8: {}
 #       task-core-9: {}
@@ -38,12 +38,12 @@ all:
     task-core-4:
       ansible_host: 10.98.0.6
       ansible_user: stack
-#   task-core-5:
-#     ansible_host: 10.98.0.7
-#     ansible_user: stack
-#   task-core-6:
-#     ansible_host: 10.98.0.8
-#     ansible_user: stack
+    task-core-5:
+      ansible_host: 10.98.0.7
+      ansible_user: stack
+    task-core-6:
+      ansible_host: 10.98.0.8
+      ansible_user: stack
 #   task-core-7:
 #     ansible_host: 10.98.0.9
 #     ansible_user: stack
