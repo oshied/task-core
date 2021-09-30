@@ -2,6 +2,7 @@
 import unittest
 import yaml
 from unittest import mock
+from taskflow.types import sets
 from task_core import base
 from task_core.exceptions import InvalidFileData
 
@@ -86,6 +87,24 @@ class TestBaseTask(unittest.TestCase):
         self.assertEqual(obj.task_id, "i")
         self.assertEqual(obj.action, "a")
         self.assertRaises(NotImplementedError, obj.execute)
+
+    def test_deps(self):
+        data = {
+            "id": "i",
+            "action": "a",
+            "driver": "print",
+            "provides": ["foo"],
+            "requires": ["bar"],
+            "needed-by": ["baz"],
+        }
+        obj = base.BaseTask("test", data, [])
+        self.assertEqual(obj.driver, "print")
+        self.assertEqual(obj.task_provides, ["foo"])
+        self.assertEqual(obj.task_requires, ["bar"])
+        self.assertEqual(obj.task_needed_by, ["baz"])
+        self.assertEqual(obj.requires, sets.OrderedSet(["bar"]))
+        obj.update_requires(["buzz"])
+        self.assertEqual(obj.requires, sets.OrderedSet(["bar", "buzz"]))
 
 
 class TestBaseInstance(unittest.TestCase):

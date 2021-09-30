@@ -1,0 +1,33 @@
+id: service-e
+type: service
+version: 1.0.0
+tasks:
+  - id: setup
+    action: init
+    driver: service
+    provides:
+      - service-e.init
+    jobs:
+      - echo: "service e start"
+
+  - id: run
+    action: run
+    driver: service
+    provides:
+      - service-e.run
+    requires:
+      - service-e.init
+    jobs:
+      - echo: "service e run"
+
+  - id: finalize
+    action: finalize
+    driver: service
+    provides:
+      - service-e.finalize
+    requires:
+      - service-e.run
+    needed-by:
+      - service-c.run
+    jobs:
+      - echo: "service e done"

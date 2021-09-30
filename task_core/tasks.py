@@ -99,7 +99,7 @@ class DirectordTask(ServiceTask):
     """
 
     def execute(self, *args, **kwargs) -> list:
-        if not DirectordConnect():
+        if not DirectordConnect:
             raise Exception(
                 "directord libraries are unavailable. Please install directord."
             )

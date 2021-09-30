@@ -31,6 +31,11 @@ definitions:
         items:
           oneOf:
             - $ref: "#/definitions/task_id"
+      needed-by:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
       driver:
         const: service
       jobs:
@@ -58,6 +63,11 @@ definitions:
         items:
           oneOf:
             - $ref: "#/definitions/task_id"
+      needed-by:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
       driver:
         cosnt: print
       message:
@@ -80,6 +90,11 @@ definitions:
           oneOf:
             - $ref: "#/definitions/task_id"
       requires:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      needed-by:
         type: array
         items:
           oneOf:
@@ -112,6 +127,11 @@ definitions:
         items:
           oneOf:
             - $ref: "#/definitions/task_id"
+      needed-by:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
       driver:
         const: ansible_runner
       playbook:
@@ -140,6 +160,11 @@ definitions:
           oneOf:
             - $ref: "#/definitions/task_id"
       requires:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      needed-by:
         type: array
         items:
           oneOf:

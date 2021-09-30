@@ -61,6 +61,8 @@ tasks:
       - service-a.run
     requires:
       - service-a.init
+    needed-by:
+      - service-a.finalize
     jobs:
       - echo: "service a run"
 

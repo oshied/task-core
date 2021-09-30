@@ -11,3 +11,4 @@ role-3:
   services:
     - service-c
     - service-d
+    - service-e

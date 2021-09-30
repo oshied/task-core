@@ -5,6 +5,7 @@ import logging
 import os
 import yaml
 from taskflow import task
+from taskflow.types import sets
 from .exceptions import InvalidFileData
 from .utils import merge_dict
 
@@ -83,6 +84,22 @@ class BaseTask(task.Task):
     @property
     def action(self) -> str:
         return self._data.get("action")
+
+    @property
+    def task_provides(self) -> list:
+        return self._data.get("provides")
+
+    @property
+    def task_requires(self) -> list:
+        return self._data.get("requires", [])
+
+    @property
+    def task_needed_by(self) -> list:
+        return self._data.get("needed-by", [])
+
+    def update_requires(self, vals: list):
+        LOG.debug("Updating %s requires to include %s", self.name, vals)
+        self.requires = self.requires.union(sets.OrderedSet(vals))
 
     def execute(self, *args, **kwargs):
         raise NotImplementedError("Execute function needs to be implemented")

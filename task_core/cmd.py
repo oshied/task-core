@@ -79,6 +79,21 @@ def load_services(services_dir) -> dict:
             LOG.error("Error loading %s", file)
             raise
         services[svc.name] = svc
+    LOG.info("Hanlding extra service dependencies...")
+    return resolve_service_deps(services)
+
+
+def resolve_service_deps(services: list) -> dict:
+    """loop through services and handle needed_by"""
+    needed_by = {}
+    for name in services:
+        service = services.get(name)
+        needs = service.get_tasks_needed_by()
+        for need, provides in needs.items():
+            needed_by[need] = list(set(needed_by.get(need, []) + provides))
+    for name in services:
+        service = services.get(name)
+        service.update_task_requires(needed_by)
     return services
 
 

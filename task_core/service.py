@@ -53,6 +53,31 @@ class Service(BaseFileData):
     def tasks(self) -> list:
         return self._data.get("tasks", [])
 
+    def get_tasks_needed_by(self):
+        """build a dict of needed by and provides"""
+        refs = {}
+        for _task in self.tasks:
+            provides = _task.get("provides", [])
+            for need in _task.get("needed-by", []):
+                if refs.get(need):
+                    refs[need] = sorted(list(set(refs[need] + provides)))
+                else:
+                    refs[need] = sorted(list(set(provides)))
+        return refs
+
+    def update_task_requires(self, needs: dict):
+        """update task requires based on needed by info"""
+        for _task in self.tasks:
+            for need, provides in needs.items():
+                if provides is None:
+                    # shouldn't be None, but to be safe let's skip it
+                    LOG.warning("A task with no provides has a needed-by %s", need)
+                    continue
+                if provides is not None and isinstance(provides, str):
+                    provides = [provides]
+                if need in _task.get("provides", []):
+                    _task["requires"] = list(set(_task.get("requires", []) + provides))
+
     def build_tasks(self, task_type_override=None):
         tasks = []
         for _task in self.tasks:

@@ -28,6 +28,8 @@ tasks:
       - service-a.run
     requires:
       - service-a.init
+    needed-by:
+      - service-b.run
     jobs:
       - echo: "service a run"
 
@@ -38,6 +40,8 @@ tasks:
       - service-a.finalize
     requires:
       - service-a.run
+    needed-by:
+      - service-b.run
     jobs:
       - echo: "service a done"
 """
@@ -126,3 +130,37 @@ class TestService(unittest.TestCase):
             obj.save("/tmp/foo")
             open_mock.assert_called_with("/tmp/foo", encoding="utf-8", mode="w")
             mock_dump.assert_called_with(yaml.safe_load(DUMMY_SERVICE_DATA), mock.ANY)
+
+    def test_requires_update(self):
+        with mock.patch(
+            "builtins.open", mock.mock_open(read_data=DUMMY_SERVICE_DATA)
+        ) as open_mock:
+            obj = service.Service("/foo/bar")
+            open_mock.assert_called_with("/foo/bar", encoding="utf-8", mode="r")
+            self.assertEqual(obj.tasks[3].get("requires"), ["service-a.run"])
+            updates = {
+                "service-a.init": None,
+                "service-a.finalize": ["other-service.init"],
+                "service-a.run": "other-service.foo",
+            }
+            obj.update_task_requires(updates)
+            self.assertListEqual(
+                sorted(obj.tasks[2].get("requires")),
+                sorted(["service-a.init", "other-service.foo"]),
+            )
+
+            self.assertListEqual(
+                sorted(obj.tasks[3].get("requires")),
+                sorted(["service-a.run", "other-service.init"]),
+            )
+
+    def test_needed_by(self):
+        with mock.patch(
+            "builtins.open", mock.mock_open(read_data=DUMMY_SERVICE_DATA)
+        ) as open_mock:
+            obj = service.Service("/example")
+            open_mock.assert_called_with("/example", encoding="utf-8", mode="r")
+            self.assertEqual(
+                obj.get_tasks_needed_by(),
+                {"service-b.run": sorted(["service-a.finalize", "service-a.run"])},
+            )
