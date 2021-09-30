@@ -134,7 +134,7 @@ class TestDirectordTask(unittest.TestCase):
         mock_mixin.return_value = mixin_obj
         mock_manage.return_value = manage_obj
         mixin_obj.exec_orchestrations.return_value = [b"foo"]
-        manage_obj.poll_job.return_value = (False, "meh")
+        manage_obj.poll_job.return_value = (False, "meh", None, None, None)
         obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
         self.assertRaises(ExecutionFailed, obj.execute)
         mixin_obj.exec_orchestrations.assert_called_once_with(
