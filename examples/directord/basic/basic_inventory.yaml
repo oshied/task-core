@@ -7,13 +7,13 @@ hosts:
     role: controller
   task-core-4:
     role: compute
-  task-core-5:
-    role: compute
-  task-core-6:
-    role: compute
-  task-core-7:
-    role: compute
-  task-core-8:
-    role: compute
-  task-core-9:
-    role: compute
+# task-core-5:
+#   role: compute
+# task-core-6:
+#   role: compute
+# task-core-7:
+#   role: compute
+# task-core-8:
+#   role: compute
+# task-core-9:
+#   role: compute
