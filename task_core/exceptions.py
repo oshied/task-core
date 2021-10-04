@@ -16,3 +16,7 @@ class ExecutionFailed(Exception):
 
 class InvalidFileData(Exception):
     """Exception for Invalid File data"""
+
+
+class UnavailableException(Exception):
+    """exception for unavailable conditions"""

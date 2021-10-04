@@ -14,10 +14,9 @@ from taskflow import engines
 from taskflow import exceptions as tf_exc
 from taskflow.patterns import graph_flow as gf
 
-from .exceptions import InvalidService
+from .exceptions import InvalidService, UnavailableException
 from .logging import setup_basic_logging
-from .inventory import Inventory
-from .inventory import Roles
+from .manager import TaskManager
 from .service import Service
 
 LOG = logging.getLogger(__name__)
@@ -136,19 +135,8 @@ def main():
     args = cli.parse_args()
 
     setup_basic_logging(args.debug)
-    LOG.info("Loading services from %s", args.services_dir)
-    services = load_services(args.services_dir)
-    LOG.info("Loading inventory from %s....", args.inventory_file)
-    inventory = Inventory(args.inventory_file)
-    LOG.info("Loading roles from %s....", args.roles_file)
-    roles = Roles(args.roles_file)
-
-    LOG.info("Adding hosts to services...")
-    add_hosts_to_services(inventory, roles, services)
-
-    flow = gf.Flow("root")
-    LOG.info("Adding services to flow...")
-    add_services_to_flow(flow, services)
+    mgr = TaskManager(args.services_dir, args.inventory_file, args.roles_file)
+    flow = mgr.create_flow()
 
     if not args.noop:
         LOG.info("Starting execution...")
@@ -159,11 +147,11 @@ def main():
         LOG.info("Stats: %s", e.statistics)
     else:
         result = None
-        dot = networkx.drawing.nx_pydot.to_pydot(
-            flow._graph  # pylint: disable=protected-access
-        )
-        dot.write_svg("noop.svg")
-        LOG.info("Task graph written out to noop.svg")
+        try:
+            mgr.write_flow_graph(flow, "noop.svg")
+            LOG.info("Task graph written out to noop.svg")
+        except UnavailableException:
+            pass
         LOG.info("Skipping execution due to --noop...")
     end = datetime.now()
     LOG.info("Elapsed time: %s", end - start)
@@ -179,22 +167,14 @@ def example():
     services_dir = os.path.join(
         sys.prefix, "share", "task-core", "examples", "framework", "services"
     )
-    services = load_services(services_dir)
-
     inventory_file = os.path.join(
         sys.prefix, "share", "task-core", "examples", "framework", "inventory.yaml"
     )
-    inventory = Inventory(inventory_file)
-
     roles_file = os.path.join(
         sys.prefix, "share", "task-core", "examples", "framework", "roles.yaml"
     )
-    roles = Roles(roles_file)
-
-    add_hosts_to_services(inventory, roles, services)
-
-    flow = gf.Flow("root")
-    add_services_to_flow(flow, services)
+    mgr = TaskManager(services_dir, inventory_file, roles_file)
+    flow = mgr.create_flow()
 
     LOG.info("Running...")
     result = engines.run(flow, engine="parallel")
