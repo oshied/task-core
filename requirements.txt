@@ -1,8 +1,9 @@
-directord>=0.10.0
-
 pbr!=2.1.0,>=2.0.0
 networkx
 taskflow
 pyyaml
 stevedore
-ansible_runner
+jsonschema>=3.2.0
+# these are techincally optional
+directord>=0.10.0
+ansible-runner
