@@ -146,7 +146,8 @@ disable=print-statement,
         missing-function-docstring, # mwhahaha: enable later as needed
         fixme, # mwhahaha: TODOs shouldn't reduce lint quality
         duplicate-code, # mwhahaha: Can't be disabled selectively so helper scripts are hitting it
-        consider-using-f-string # mwhahaha: figure out if we want to switch to fstrings
+        consider-using-f-string, # mwhahaha: figure out if we want to switch to fstrings
+        no-name-in-module # mwhahaha: false positives on schema classes
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
