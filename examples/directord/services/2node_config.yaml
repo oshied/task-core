@@ -1,0 +1,19 @@
+# 2node config is specific to the 2node version of the basic example but provides the config.init
+id: 2node_config
+type: service
+version: 1.0.0
+tasks:
+  - id: init
+    action: run
+    driver: directord
+    provides:
+      - config.init
+    requires:
+      - repos.init
+      - hostname.init
+      - tripleo_packages.init
+    jobs:
+      - ADD: ../basic/2node_options.yaml /var/tmp/directord-config.yaml
+      - CACHEFILE: /var/tmp/directord-config.yaml
+      # TODO(mwhahaha): I think there's a race here
+      #- RUN: rm -rf /var/tmp/directord-config.yaml

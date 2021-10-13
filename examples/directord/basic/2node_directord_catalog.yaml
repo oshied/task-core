@@ -1,0 +1,13 @@
+directord_server:
+  targets:
+  - host: 10.98.0.2
+    port: 22
+    username: stack
+
+directord_clients:
+  args:
+    port: 22
+    username: stack
+  targets:
+  - host: 10.98.0.2
+  - host: 10.98.0.3

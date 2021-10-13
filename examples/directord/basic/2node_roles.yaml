@@ -1,0 +1,96 @@
+controller:
+  services:
+    # framework services
+    - 2node_config
+    - hostname
+    - hosts
+    - openvswitch
+    - os-net-config
+    - repos
+    - selinux
+    # other services
+    - boot_params_service
+    - ca_certs
+    - cinder_api
+#   - cinder_scheduler
+#   - cinder_volume
+#   - clustercheck
+#   - container_image_prepare
+    - glance_api
+    - haproxy
+#   - heat_api
+#   - heat_api_cloudwatch_disabled
+#   - heat_api_cfn
+#   - heat_engine
+#   - horizon
+    - httpd
+    - iscsid
+    - keepalived
+    - kernel
+    - keystone
+    - memcached
+    - mariadb
+    - mysql_client
+    - neutron_api
+#   - neutron_plugin_ml2
+    - neutron_dhcp
+    - neutron_l3
+    - neutron_metadata
+    - neutron_ovs_agent
+    - nova_api
+#   - nova_conductor
+#   - nova_metadata
+#   - nova_scheduler
+#   - nova_vnc_proxy
+#   - logrotate_crond
+#   - pacemaker
+    - placement
+    - rabbitmq
+#   - oslo_messaging_rpc
+#   - oslo_messaging_notify
+    - podman
+    - snmp
+    - sshd
+    - swift_proxy
+    - swift_ringbuilder
+    - swift_storage
+    - chronyd
+    - timezone
+    - tripleo_firewall
+    - tripleo_packages
+    - tuned
+
+
+compute:
+  services:
+    # framework services
+    - 2node_config
+    - hostname
+    - hosts
+    - openvswitch
+    - os-net-config
+    - repos
+    - selinux
+    # other services
+    - boot_params_service
+    - ca_certs
+    - iscsid
+    - kernel
+    - libvirt
+    - mysql_client
+    - compute_ovs_agent
+    - nova_compute
+#   - nova_libvirt
+#   - nova_libvirt_guests
+#   - nova_migration_target
+#   - logrotate_crond
+    - podman
+    - snmp
+    - sshd
+    - chronyd
+    - timezone
+    - tripleo_firewall
+    - tripleo_packages
+    - tuned
+#   - ovn_controller
+#   - ovn_metadata
