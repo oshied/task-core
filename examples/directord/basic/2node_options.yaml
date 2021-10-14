@@ -29,6 +29,6 @@ tripleo_kernel_sysctl_settings: {}
 
 tripleo_rabbitmq_cookie: 8c96e9e0cb7deec37ec24f39b35ff65d58e01ff9
 tripleo_rabbitmq_hosts:
-  - task-core-1
+  - task-core-0
 
 tripleo_selinux_enforce: 0
