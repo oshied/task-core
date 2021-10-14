@@ -105,11 +105,43 @@ class TestBaseSchemaValidator(unittest.TestCase):
         except Exception as e:
             self.assertIsInstance(e, NotImplementedError)
 
-    def test_schema_fodler(self):
+    @mock.patch("os.path.exists")
+    def test_schema_folder_venv(self, mock_exists):
         obj = schema.BaseSchemaValidator.instance()
+        mock_exists.return_value = True
+        expected_path = os.path.join(sys.prefix, "share", "task-core", "schema")
+        self.assertEqual(obj.schema_folder, expected_path)
+        mock_exists.assert_called_once_with(expected_path)
+
+    @mock.patch("os.path.exists")
+    def test_schema_folder_rpm(self, mock_exists):
+        obj = schema.BaseSchemaValidator.instance()
+        mock_exists.reset_mock()
+        mock_exists.side_effect = [False, True]
+        expected_path = os.path.join("/usr", "share", "task-core", "schema")
+        self.assertEqual(obj.schema_folder, expected_path)
+        calls = [
+            mock.call(os.path.join(sys.prefix, "share", "task-core", "schema")),
+            mock.call(expected_path),
+        ]
+        self.assertEqual(mock_exists.mock_calls, calls)
+
+    @mock.patch("os.path.exists")
+    def test_schema_folder_system_pip(self, mock_exists):
+        obj = schema.BaseSchemaValidator.instance()
+        mock_exists.reset_mock()
+        mock_exists.side_effect = [False, False, True]
+        expected_path = os.path.join("/usr", "local", "share", "task-core", "schema")
         self.assertEqual(
-            obj.schema_folder, os.path.join(sys.prefix, "share", "task-core", "schema")
+            obj.schema_folder,
+            os.path.join("/usr", "local", "share", "task-core", "schema"),
         )
+        calls = [
+            mock.call(os.path.join(sys.prefix, "share", "task-core", "schema")),
+            mock.call(os.path.join("/usr", "share", "task-core", "schema")),
+            mock.call(expected_path),
+        ]
+        self.assertEqual(mock_exists.mock_calls, calls)
 
 
 class TestInventorySchemaValidator(unittest.TestCase):

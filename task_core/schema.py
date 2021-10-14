@@ -15,10 +15,24 @@ class BaseSchemaValidator(BaseInstance):
 
     _instance = None
     _schema = None
+    _schema_path = None
 
     @property
     def schema_folder(self):
-        return os.path.join(sys.prefix, "share", "task-core", "schema")
+        if self._schema_path:
+            return self._schema_path
+        prefixes = [
+            sys.prefix,  # venv
+            os.path.join("/usr"),  # rpm
+            os.path.join("/usr", "local"),  # sudo pip
+        ]
+        for prefix in prefixes:
+            schema_path = os.path.join(prefix, "share", "task-core", "schema")
+            if os.path.exists(schema_path):
+                LOG.debug("Found schema path %s", schema_path)
+                self._schema_path = schema_path
+                break
+        return self._schema_path
 
     @property
     def schema(self):
