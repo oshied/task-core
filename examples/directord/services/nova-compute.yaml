@@ -94,7 +94,7 @@ tasks:
           if [ $(egrep -c '(vmx|svm)' /proc/cpuinfo) -gt 0 ]; then
             crudini --set /etc/nova/nova.conf libvirt virt_type qemu;
           else
-            crudini --del /etc/nova/nova.conf libvirt virt_type qemu;
+            crudini --del /etc/nova/nova.conf libvirt virt_type;
           fi
       - RUN: >-
           crudini --set /etc/nova/nova.conf libvirt cpu-model host-model
