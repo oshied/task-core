@@ -225,9 +225,7 @@ class TestAnsibleRunnerTask(unittest.TestCase):
         mock_result.stats = {}
 
         obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
-        result = obj.execute()
-        self.assertFalse(result[0].status)
-        self.assertEqual(result[0].data, {"stdout": "foo", "stats": {}})
+        self.assertRaises(ExecutionFailed, obj.execute)
 
         mock_result.rc = 0
         mock_result.status = "failed"
@@ -235,9 +233,7 @@ class TestAnsibleRunnerTask(unittest.TestCase):
         mock_result.stats = {}
 
         obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
-        result = obj.execute()
-        self.assertFalse(result[0].status)
-        self.assertEqual(result[0].data, {"stdout": "foo", "stats": {}})
+        self.assertRaises(ExecutionFailed, obj.execute)
 
 
 class TestNoopTask(unittest.TestCase):

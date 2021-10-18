@@ -208,22 +208,42 @@ class AnsibleRunnerTask(BaseTask):
                 "install ansible-runner."
             )
         LOG.debug(
-            "%s ansible execute - args: %s, kwargs: %s, hosts: %s, data; %s",
+            "%s ansible execute - args: %s, kwargs: %s, working_dir: %s, hosts: %s, data; %s",
             self,
             args,
             kwargs,
+            self.working_dir,
             self.hosts,
             self.data,
         )
         LOG.info("%s | Running", self)
+        # check if playbook is relative to working dir and exists, or
+        # fall back to the provided playbook path and hope it exists
+        playbook_path = os.path.join(self.working_dir, self.playbook)
+        if not os.path.isfile(playbook_path):
+            playbook_path = self.playbook
+
+        # default to an inventory in working dir if not defined on the task
+        inventory_path = os.path.join(self.working_dir, "inventory.yaml")
+        if self.inventory is not None and os.path.exists(
+            os.path.join(self.working_dir, self.inventory)
+        ):
+            inventory_path = os.path.join(self.working_dir, self.inventory)
+
         runner = ansible_runner.run(
             private_data_dir=self.working_dir,
-            playbook=self.playbook,
-            inventory=self.inventory,
+            playbook=playbook_path,
+            inventory=inventory_path,
         )
         data = {"stdout": runner.stdout, "stats": runner.stats}
         # https://ansible-runner.readthedocs.io/en/stable/python_interface.html#the-runner-object
         status = runner.rc == 0 and runner.status == "successful"
+        if not status:
+            raise ExecutionFailed(
+                "{} | Ansible job execution failed. rc: {}, status {}".format(
+                    self, runner.rc, runner.status
+                )
+            )
         LOG.info("%s | Completed", self)
         return [TaskResult(status, data)]
 
