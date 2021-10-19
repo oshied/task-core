@@ -201,6 +201,47 @@ class AnsibleRunnerTask(BaseTask):
     def working_dir(self) -> str:
         return self._data.get("working_dir", os.getcwd())
 
+    def _default_ansible_paths(self):
+        paths = {}
+        paths["ANSIBLE_ACTION_PLUGINS"] = ":".join(
+            [
+                os.path.join(self.working_dir, "action"),
+                "/usr/share/ansible/plugins/action",
+            ]
+        )
+        paths["ANSIBLE_CALLBACK_PLUGINS"] = ":".join(
+            [
+                os.path.join(self.working_dir, "callback"),
+                "/usr/share/ansible/plugins/callback",
+            ]
+        )
+        paths["ANSIBLE_FILTER_PLUGINS"] = ":".join(
+            [
+                os.path.join(self.working_dir, "filter"),
+                "/usr/share/ansible/plugins/filter",
+            ]
+        )
+        paths["ANSIBLE_LIBRARY"] = ":".join(
+            [
+                os.path.join(self.working_dir, "modules"),
+                "/usr/share/ansible/plugins/modules",
+            ]
+        )
+        paths["ANSIBLE_LOOKUP_PLUGINS"] = ":".join(
+            [
+                os.path.join(self.working_dir, "lookup"),
+                "/usr/share/ansible/plugins/lookup",
+            ]
+        )
+        paths["ANSIBLE_ROLES_PATH"] = ":".join(
+            [
+                os.path.join(self.working_dir, "roles"),
+                "/usr/share/ansible/roles",
+                "/etc/ansible/roles",
+            ]
+        )
+        return paths
+
     def execute(self, *args, **kwargs) -> list:
         if not ansible_runner:
             raise Exception(
@@ -229,19 +270,34 @@ class AnsibleRunnerTask(BaseTask):
             os.path.join(self.working_dir, self.inventory)
         ):
             inventory_path = os.path.join(self.working_dir, self.inventory)
+        elif not os.path.exists(inventory_path):
+            inventory_path = None
 
-        runner = ansible_runner.run(
-            private_data_dir=self.working_dir,
-            playbook=playbook_path,
-            inventory=inventory_path,
-        )
+        env = self._default_ansible_paths()
+        cfg_path = os.path.join(self.working_dir, "ansible.cfg")
+        if os.path.exists(cfg_path):
+            env["ANSIBLE_CONFIG"] = cfg_path
+
+        runner_opts = {
+            "private_data_dir": self.working_dir,
+            "project_dir": self.working_dir,
+            "playbook": playbook_path,
+            "envvars": env,
+        }
+        if inventory_path:
+            runner_opts["inventory"] = inventory_path
+        runner_config = ansible_runner.runner_config.RunnerConfig(**runner_opts)
+        runner_config.prepare()
+        # runner_config.env["ANSIBLE_STDOUT_CALLBACK"] = "tripleo_dense"
+        runner = ansible_runner.Runner(config=runner_config)
+        status, rc = runner.run()
         data = {"stdout": runner.stdout, "stats": runner.stats}
         # https://ansible-runner.readthedocs.io/en/stable/python_interface.html#the-runner-object
-        status = runner.rc == 0 and runner.status == "successful"
+        status = rc == 0 and status == "successful"
         if not status:
             raise ExecutionFailed(
                 "{} | Ansible job execution failed. rc: {}, status {}".format(
-                    self, runner.rc, runner.status
+                    self, rc, status
                 )
             )
         LOG.info("%s | Completed", self)

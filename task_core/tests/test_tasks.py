@@ -185,7 +185,10 @@ class TestAnsibleRunnerTask(unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.data = yaml.safe_load(DUMMY_ANSIBLE_RUNNER_TASK_DATA)
-        runner_patcher = mock.patch("ansible_runner.run")
+        runner_cfg_patcher = mock.patch("ansible_runner.runner_config.RunnerConfig")
+        self.mock_run_cfg = runner_cfg_patcher.start()
+        self.addCleanup(runner_cfg_patcher.stop)
+        runner_patcher = mock.patch("ansible_runner.Runner")
         self.mock_run = runner_patcher.start()
         self.addCleanup(runner_patcher.stop)
 
@@ -199,38 +202,86 @@ class TestAnsibleRunnerTask(unittest.TestCase):
         self.assertEqual(obj.playbook, "foo.yml")
         self.assertEqual(obj.working_dir, "/working/dir")
 
+    def test_object_paths(self):
+        """test ansible paths"""
+        obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
+        env = obj._default_ansible_paths()
+        expected = {
+                "ANSIBLE_ACTION_PLUGINS": (
+                    "/working/dir/action:/usr/share/ansible/plugins/action"
+                ),
+                "ANSIBLE_CALLBACK_PLUGINS": (
+                    "/working/dir/callback:/usr/share/ansible/plugins/callback"
+                ),
+                "ANSIBLE_FILTER_PLUGINS": (
+                    "/working/dir/filter:/usr/share/ansible/plugins/filter"
+                ),
+                "ANSIBLE_LIBRARY": (
+                    "/working/dir/modules:/usr/share/ansible/plugins/modules"
+                ),
+                "ANSIBLE_LOOKUP_PLUGINS": (
+                    "/working/dir/lookup:/usr/share/ansible/plugins/lookup"
+                ),
+                "ANSIBLE_ROLES_PATH": (
+                    "/working/dir/roles:/usr/share/ansible/roles:/etc/ansible/roles"
+                ),
+            }
+        self.assertEqual(env, expected)
+
     def test_execute(self):
         """test execute"""
         mock_result = mock.MagicMock()
         self.mock_run.return_value = mock_result
 
-        mock_result.rc = 0
-        mock_result.status = "successful"
-        mock_result.stdout = "foo"
-        mock_result.stats = {}
+        mock_result.run.return_value = ("successful", 0)
+        self.mock_run.return_value.stdout = "foo"
+        self.mock_run.return_value.stats = {}
 
+        mock_paths = mock.MagicMock()
+        mock_paths.return_value = {}
         obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
+        obj._default_ansible_paths = mock_paths
         result = obj.execute()
         self.assertTrue(result[0].status)
         self.assertEqual(result[0].data, {"stdout": "foo", "stats": {}})
+        self.mock_run_cfg.assert_called_once_with(
+            envvars={},
+            playbook="foo.yml",
+            private_data_dir="/working/dir",
+            project_dir="/working/dir",
+        )
+        self.mock_run.assert_called_once_with(config=self.mock_run_cfg.return_value)
+
+        self.mock_run_cfg.reset_mock()
+        self.mock_run.reset_mock()
+        with mock.patch('os.path.exists', return_value=True):
+            result = obj.execute()
+            self.mock_run_cfg.assert_called_once_with(
+                envvars={'ANSIBLE_CONFIG': '/working/dir/ansible.cfg'},
+                inventory='/working/dir/inventory.yaml',
+                playbook="foo.yml",
+                private_data_dir="/working/dir",
+                project_dir="/working/dir",
+            )
 
     def test_execute_failure(self):
         """test execute failure"""
         mock_result = mock.MagicMock()
         self.mock_run.return_value = mock_result
 
-        mock_result.rc = 2
-        mock_result.status = "successful"
-        mock_result.stdout = "foo"
-        mock_result.stats = {}
+        mock_result = mock.MagicMock()
+        self.mock_run.return_value = mock_result
+
+        mock_result.run.return_value = ("successful", 2)
+        self.mock_run.return_value.stdout = "foo"
+        self.mock_run.return_value.stats = {}
 
         obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
         self.assertRaises(ExecutionFailed, obj.execute)
 
-        mock_result.rc = 0
-        mock_result.status = "failed"
-        mock_result.stdout = "foo"
-        mock_result.stats = {}
+        mock_result.run.return_value = ("failed", 0)
+        self.mock_run.return_value.stdout = "foo"
+        self.mock_run.return_value.stats = {}
 
         obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
         self.assertRaises(ExecutionFailed, obj.execute)
