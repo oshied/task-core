@@ -201,6 +201,14 @@ class AnsibleRunnerTask(BaseTask):
     def working_dir(self) -> str:
         return self._data.get("working_dir", os.getcwd())
 
+    @property
+    def runner_options(self) -> dict:
+        return self._data.get("runner_options", {})
+
+    @property
+    def global_fact_cache(self) -> bool:
+        return self._data.get("global_fact_cache", True)
+
     def _default_ansible_paths(self):
         paths = {}
         paths["ANSIBLE_ACTION_PLUGINS"] = ":".join(
@@ -286,9 +294,19 @@ class AnsibleRunnerTask(BaseTask):
         }
         if inventory_path:
             runner_opts["inventory"] = inventory_path
+
+        runner_opts.update(self.runner_options)
         runner_config = ansible_runner.runner_config.RunnerConfig(**runner_opts)
         runner_config.prepare()
+        # TODO: the call back needs to be overridden here if you want something
+        # other than the default.
         # runner_config.env["ANSIBLE_STDOUT_CALLBACK"] = "tripleo_dense"
+
+        # By default ansible-runner forces a per-execution fact cache but we
+        # want to share fact caches between our tasks. This can be disabled
+        # at a task level by setting global_fact_cache to false
+        if self.global_fact_cache:
+            runner_config.env["ANSIBLE_CACHE_PLUGIN_CONNECTION"] = "~/.ansible/fact_cache"
         runner = ansible_runner.Runner(config=runner_config)
         status, rc = runner.run()
         data = {"stdout": runner.stdout, "stats": runner.stats}

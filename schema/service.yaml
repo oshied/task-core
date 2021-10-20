@@ -140,6 +140,10 @@ definitions:
         type: string
       working_dir:
         type: string
+      runner_options:
+        type: object
+      global_fact_cache:
+        type: boolean
     required:
       - id
       - action
