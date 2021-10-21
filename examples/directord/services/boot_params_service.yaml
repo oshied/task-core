@@ -6,7 +6,7 @@ tasks:
     action: run
     driver: directord
     provides:
-      - boot-patams-tuned.init
+      - boot-params-tuned.init
     requires:
       - tuned.init
     jobs:
