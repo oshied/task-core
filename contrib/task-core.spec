@@ -1,5 +1,5 @@
 %global debug_package %{nil}
-%{?!released_version: %global released_version 0.0.2}
+%{?!released_version: %global released_version 0.1.0}
 
 # ---------------
 # task-core
@@ -121,5 +121,8 @@ rm -rf *.egg-info
 # ---------------
 
 %changelog
+* Mon Oct 25 2021 Alex Schultz <aschultz@redhat.com> - 0.1.0-1
+- Initial 0.1.0 release
+
 * Thu Jul 29 2021 Alex Schultz <aschultz@redhat.com> - 0.0.1-1
 - Initial Release
