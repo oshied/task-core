@@ -3,8 +3,8 @@ task-core
 
 |CI Status|
 
-.. |CI Status| image:: https://github.com/mwhahaha/task-core/actions/workflows/py-tox.yml/badge.svg
-   :target: https://github.com/mwhahaha/task-core/actions
+.. |CI Status| image:: https://github.com/Directord/task-core/actions/workflows/py-tox.yml/badge.svg
+   :target: https://github.com/Directord/task-core/actions
 
 Install
 ~~~~~~~
@@ -42,7 +42,7 @@ the bash script.
     virtualenv ~/test-venv
     source ~/test-venv/bin/activate
 
-    git clone https://github.com/mwhahaha/task-core
+    git clone https://github.com/Directord/task-core
 
     pip install directord
 

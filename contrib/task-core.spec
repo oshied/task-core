@@ -12,8 +12,8 @@ Release:        1%{?dist}
 
 License:        ASL 2.0
 
-URL:            https://github.com/mwhahaha/task-core
-Source:         https://github.com/mwhahaha/task-core/archive/%{version}.tar.gz#/task-core-%{version}.tar.gz
+URL:            https://github.com/Directord/task-core
+Source:         https://github.com/Directord/task-core/archive/%{version}.tar.gz#/task-core-%{version}.tar.gz
 
 BuildArch:      noarch
 
@@ -121,6 +121,9 @@ rm -rf *.egg-info
 # ---------------
 
 %changelog
+* Mon Oct 25 2021 Alex Schultz <aschultz@redhat.com> - 0.1.1-1
+- Initial 0.1.1 release
+
 * Mon Oct 25 2021 Alex Schultz <aschultz@redhat.com> - 0.1.0-1
 - Initial 0.1.0 release
 

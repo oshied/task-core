@@ -33,7 +33,7 @@ path is assumed for future commands.
 # Build task-core
 mkdir -p ~/rpmbuild/SOURCES
 sudo dnf -y install yum-utils rpm-build dnf-plugins-core python3-pbr
-git clone https://github.com/mwhahaha/task-core
+git clone https://github.com/Directord/task-core
 
 pushd ~/task-core/
 git fetch --all && git checkout origin/poc
