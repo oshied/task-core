@@ -1,5 +1,5 @@
 %global debug_package %{nil}
-%{?!released_version: %global released_version 0.1.0}
+%{?!released_version: %global released_version 0.1.2}
 
 # ---------------
 # task-core
@@ -121,8 +121,11 @@ rm -rf *.egg-info
 # ---------------
 
 %changelog
+* Mon Oct 25 2021 Alex Schultz <aschultz@redhat.com> - 0.1.2-1
+- Fixes tag for release rpms
+
 * Mon Oct 25 2021 Alex Schultz <aschultz@redhat.com> - 0.1.1-1
-- Initial 0.1.1 release
+- Fixes repository move
 
 * Mon Oct 25 2021 Alex Schultz <aschultz@redhat.com> - 0.1.0-1
 - Initial 0.1.0 release
