@@ -306,7 +306,9 @@ class AnsibleRunnerTask(BaseTask):
         # want to share fact caches between our tasks. This can be disabled
         # at a task level by setting global_fact_cache to false
         if self.global_fact_cache:
-            runner_config.env["ANSIBLE_CACHE_PLUGIN_CONNECTION"] = "~/.ansible/fact_cache"
+            runner_config.env[
+                "ANSIBLE_CACHE_PLUGIN_CONNECTION"
+            ] = "~/.ansible/fact_cache"
         runner = ansible_runner.Runner(config=runner_config)
         status, rc = runner.run()
         data = {"stdout": runner.stdout, "stats": runner.stats}

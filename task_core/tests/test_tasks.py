@@ -6,6 +6,20 @@ from unittest import mock
 from task_core import tasks
 from task_core.exceptions import ExecutionFailed
 
+try:
+    import ansible_runner
+
+    ANSIBLE_RUNNER_UNAVAILABLE = False
+except:
+    ANSIBLE_RUNNER_UNAVAILABLE = True
+
+try:
+    import directord
+
+    DIRECTORD_UNAVAILABLE = False
+except:
+    DIRECTORD_UNAVAILABLE = True
+
 
 DUMMY_PRINT_TASK_DATA = """
 id: print
@@ -101,6 +115,7 @@ class TestServiceTask(unittest.TestCase):
         self.assertTrue(result[0].status)
 
 
+@unittest.skipIf(DIRECTORD_UNAVAILABLE, "directord library unavailable")
 class TestDirectordTask(unittest.TestCase):
     """test DirectordTask"""
 
@@ -118,39 +133,54 @@ class TestDirectordTask(unittest.TestCase):
         self.assertEqual(obj.action, "run")
         self.assertEqual(obj.jobs, self.data["jobs"])
 
-    @mock.patch("directord.mixin.Mixin")
-    def test_execute(self, mock_mixin):
+    @mock.patch("task_core.tasks.DirectordConnect")
+    def test_execute(self, mock_client):
         """test execute"""
+        mock_conn = mock.MagicMock()
+        mock_conn.orchestrate.return_value = []
+        mock_client.return_value = mock_conn
         obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
         result = obj.execute()
         self.assertTrue(result[0].status)
 
-    @mock.patch("directord.user.Manage")
-    @mock.patch("directord.mixin.Mixin")
-    def test_execute_failure(self, mock_mixin, mock_manage):
+    @mock.patch("task_core.tasks.DirectordConnect")
+    def test_execute_success(self, mock_client):
+        """test execute"""
+        mock_conn = mock.MagicMock()
+        mock_poll = mock.MagicMock()
+        mock_conn.orchestrate.return_value = ["foo"]
+        mock_client.return_value = mock_conn
+        mock_conn.poll = mock_poll
+        mock_poll.return_value = (True, "yay")
+
+        obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
+        result = obj.execute()
+        self.assertTrue(result[0].status)
+
+    @mock.patch("task_core.tasks.DirectordConnect")
+    def test_execute_failure(self, mock_client):
         """test execute fails"""
-        mixin_obj = mock.MagicMock()
-        manage_obj = mock.MagicMock()
-        mock_mixin.return_value = mixin_obj
-        mock_manage.return_value = manage_obj
-        mixin_obj.exec_orchestrations.return_value = [b"foo"]
-        manage_obj.poll_job.return_value = (False, "meh", None, None, None)
+        mock_conn = mock.MagicMock()
+        mock_poll = mock.MagicMock()
+        mock_conn.orchestrate.return_value = ["foo"]
+        mock_client.return_value = mock_conn
+        mock_conn.poll = mock_poll
+        mock_poll.return_value = (False, "meh")
+
         obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
         self.assertRaises(ExecutionFailed, obj.execute)
-        mixin_obj.exec_orchestrations.assert_called_once_with(
-            [{"jobs": self.data.get("jobs")}],
+        mock_conn.orchestrate.assert_called_once_with(
+            orchestrations=[{"jobs": self.data.get("jobs")}],
             defined_targets=["host-a", "host-b"],
-            return_raw=True,
         )
-        manage_obj.poll_job.assert_called_once_with(job_id="foo")
+        mock_poll.assert_called_once_with(job_id="foo")
 
-    @mock.patch("directord.user.Manage")
-    @mock.patch("directord.mixin.Mixin")
-    def test_execute_exception(self, mock_mixin, mock_manage):
+    @mock.patch("task_core.tasks.DirectordConnect")
+    def test_execute_exception(self, mock_client):
         """test execute throws exception"""
-        mixin_obj = mock.MagicMock()
-        mock_mixin.return_value = mixin_obj
-        mixin_obj.exec_orchestrations.side_effect = Exception("fail")
+        mock_conn = mock.MagicMock()
+        mock_conn.orchestrate.return_value = []
+        mock_client.side_effect = Exception("fail")
         obj = tasks.DirectordTask("foo", self.data, ["host-a", "host-b"])
         self.assertRaises(Exception, obj.execute)
 
@@ -179,6 +209,7 @@ class TestPrintTask(unittest.TestCase):
         self.assertEqual(result[0].data, {})
 
 
+@unittest.skipIf(ANSIBLE_RUNNER_UNAVAILABLE, "ansible runner library unavailable")
 class TestAnsibleRunnerTask(unittest.TestCase):
     """test AnsibleRunnerTask"""
 
@@ -207,25 +238,25 @@ class TestAnsibleRunnerTask(unittest.TestCase):
         obj = tasks.AnsibleRunnerTask("foo", self.data, ["host-a"])
         env = obj._default_ansible_paths()
         expected = {
-                "ANSIBLE_ACTION_PLUGINS": (
-                    "/working/dir/action:/usr/share/ansible/plugins/action"
-                ),
-                "ANSIBLE_CALLBACK_PLUGINS": (
-                    "/working/dir/callback:/usr/share/ansible/plugins/callback"
-                ),
-                "ANSIBLE_FILTER_PLUGINS": (
-                    "/working/dir/filter:/usr/share/ansible/plugins/filter"
-                ),
-                "ANSIBLE_LIBRARY": (
-                    "/working/dir/modules:/usr/share/ansible/plugins/modules"
-                ),
-                "ANSIBLE_LOOKUP_PLUGINS": (
-                    "/working/dir/lookup:/usr/share/ansible/plugins/lookup"
-                ),
-                "ANSIBLE_ROLES_PATH": (
-                    "/working/dir/roles:/usr/share/ansible/roles:/etc/ansible/roles"
-                ),
-            }
+            "ANSIBLE_ACTION_PLUGINS": (
+                "/working/dir/action:/usr/share/ansible/plugins/action"
+            ),
+            "ANSIBLE_CALLBACK_PLUGINS": (
+                "/working/dir/callback:/usr/share/ansible/plugins/callback"
+            ),
+            "ANSIBLE_FILTER_PLUGINS": (
+                "/working/dir/filter:/usr/share/ansible/plugins/filter"
+            ),
+            "ANSIBLE_LIBRARY": (
+                "/working/dir/modules:/usr/share/ansible/plugins/modules"
+            ),
+            "ANSIBLE_LOOKUP_PLUGINS": (
+                "/working/dir/lookup:/usr/share/ansible/plugins/lookup"
+            ),
+            "ANSIBLE_ROLES_PATH": (
+                "/working/dir/roles:/usr/share/ansible/roles:/etc/ansible/roles"
+            ),
+        }
         self.assertEqual(env, expected)
 
     def test_execute(self):
@@ -254,11 +285,11 @@ class TestAnsibleRunnerTask(unittest.TestCase):
 
         self.mock_run_cfg.reset_mock()
         self.mock_run.reset_mock()
-        with mock.patch('os.path.exists', return_value=True):
+        with mock.patch("os.path.exists", return_value=True):
             result = obj.execute()
             self.mock_run_cfg.assert_called_once_with(
-                envvars={'ANSIBLE_CONFIG': '/working/dir/ansible.cfg'},
-                inventory='/working/dir/inventory.yaml',
+                envvars={"ANSIBLE_CONFIG": "/working/dir/ansible.cfg"},
+                inventory="/working/dir/inventory.yaml",
                 playbook="foo.yml",
                 private_data_dir="/working/dir",
                 project_dir="/working/dir",

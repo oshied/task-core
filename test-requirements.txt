@@ -1,5 +1,5 @@
 nose
 coverage
 pylint
-# TODO(mwhahaha): remove this after reworking directord task testing
-zmq
+directord>=0.11.0
+ansible-runner
