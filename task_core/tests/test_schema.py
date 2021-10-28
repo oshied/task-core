@@ -87,6 +87,8 @@ tasks:
     message: "this is a bad task"
 """
 
+TEST_SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "schema")
+
 
 class TestBaseSchemaValidator(unittest.TestCase):
     """test base validator"""
@@ -154,9 +156,7 @@ class TestInventorySchemaValidator(unittest.TestCase):
             new_callable=mock.PropertyMock,
         )
         self.mock_folder = folder_patcher.start()
-        self.mock_folder.return_value = os.path.join(
-            os.path.dirname(__file__), "..", "..", "schema"
-        )
+        self.mock_folder.return_value = TEST_SCHEMA_PATH
         self.addCleanup(folder_patcher.stop)
 
     def tearDown(self):
@@ -184,9 +184,7 @@ class TestRolesSchemaValidator(unittest.TestCase):
             new_callable=mock.PropertyMock,
         )
         self.mock_folder = folder_patcher.start()
-        self.mock_folder.return_value = os.path.join(
-            os.path.dirname(__file__), "..", "..", "schema"
-        )
+        self.mock_folder.return_value = TEST_SCHEMA_PATH
         self.addCleanup(folder_patcher.stop)
 
     def tearDown(self):
@@ -214,9 +212,7 @@ class TestServiceSchemaValidator(unittest.TestCase):
             new_callable=mock.PropertyMock,
         )
         self.mock_folder = folder_patcher.start()
-        self.mock_folder.return_value = os.path.join(
-            os.path.dirname(__file__), "..", "..", "schema"
-        )
+        self.mock_folder.return_value = TEST_SCHEMA_PATH
         self.addCleanup(folder_patcher.stop)
 
     def tearDown(self):

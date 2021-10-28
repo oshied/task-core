@@ -22,12 +22,15 @@ class BaseSchemaValidator(BaseInstance):
         if self._schema_path:
             return self._schema_path
         prefixes = [
-            sys.prefix,  # venv
-            os.path.join("/usr"),  # rpm
-            os.path.join("/usr", "local"),  # sudo pip
+            # venv
+            os.path.join(sys.prefix, "share", "task-core"),
+            # rpm
+            os.path.join("/usr", "share", "task-core"),
+            # sudo pip
+            os.path.join("/usr", "local", "share", "task-core"),
         ]
         for prefix in prefixes:
-            schema_path = os.path.join(prefix, "share", "task-core", "schema")
+            schema_path = os.path.join(prefix, "schema")
             if os.path.exists(schema_path):
                 LOG.debug("Found schema path %s", schema_path)
                 self._schema_path = schema_path

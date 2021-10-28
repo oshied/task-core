@@ -23,7 +23,7 @@ patternProperties:
         description: List of services for a role
         type: array
         default: []
-        minItems: 1
+        minItems: 0
         uniqueItems: true
         items:
           $id: "#/properties/role_name/properties/services/items"
