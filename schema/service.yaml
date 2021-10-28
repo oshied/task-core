@@ -42,7 +42,6 @@ definitions:
         type: array
     required:
       - id
-      - action
       - driver
       - jobs
   print_task:
@@ -105,7 +104,6 @@ definitions:
         type: array
     required:
       - id
-      - action
       - driver
       - jobs
     type: object
@@ -146,7 +144,6 @@ definitions:
         type: boolean
     required:
       - id
-      - action
       - driver
       - playbook
     type: object
@@ -177,7 +174,6 @@ definitions:
         const: noop
     required:
       - id
-      - action
       - driver
     type: object
 
