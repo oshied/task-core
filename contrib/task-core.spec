@@ -1,5 +1,5 @@
 %global debug_package %{nil}
-%{?!released_version: %global released_version 0.1.2}
+%{?!released_version: %global released_version 0.2.0}
 
 # ---------------
 # task-core
@@ -121,6 +121,9 @@ rm -rf *.egg-info
 # ---------------
 
 %changelog
+* Mon Oct 25 2021 Alex Schultz <aschultz@redhat.com> - 0.2.0-1
+- Add local task type
+
 * Mon Oct 25 2021 Alex Schultz <aschultz@redhat.com> - 0.1.2-1
 - Fixes tag for release rpms
 
