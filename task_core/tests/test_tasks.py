@@ -1,4 +1,5 @@
 """unit tests of tasks"""
+import subprocess
 import stevedore.exception
 import unittest
 import yaml
@@ -59,6 +60,16 @@ requires:
   - something
 playbook: foo.yml
 working_dir: /working/dir
+"""
+
+DUMMY_LOCAL_TASK_DATA = """
+id: local
+provides:
+  - local
+requires:
+  - local
+command: >
+  sleep 10
 """
 
 
@@ -339,3 +350,123 @@ class TestNoopTask(unittest.TestCase):
         result = obj.execute()
         self.assertTrue(result[0].status)
         self.assertEqual(result[0].data, {"hosts": ["host-a", "host-b"], "id": "print"})
+
+
+class TestLocalTask(unittest.TestCase):
+    """test LocalTask"""
+
+    def setUp(self):
+        super().setUp()
+        self.data = yaml.safe_load(DUMMY_LOCAL_TASK_DATA)
+        popen_patcher = mock.patch("subprocess.Popen")
+        self.mock_popen = popen_patcher.start()
+        self.addCleanup(popen_patcher.stop)
+
+    def test_object(self):
+        """test basic object"""
+        obj = tasks.LocalTask("foo", self.data, ["host-a", "host-b"])
+        self.assertEqual(obj.data, self.data)
+        self.assertEqual(obj.hosts, ["host-a", "host-b"])
+        self.assertEqual(obj.command, "sleep 10\n")
+        self.assertEqual(obj.quiet, False)
+        self.assertEqual(obj.returncodes, [0])
+
+    def test_execute(self):
+        """test execute"""
+        obj = tasks.LocalTask("foo", self.data, ["host-a", "host-b"])
+        mock_proc = self.mock_popen.return_value.__enter__()
+        mock_proc.returncode = 0
+        mock_proc.stdout.readline.side_effect = [b"output", StopIteration()]
+        result = obj.execute()
+        self.mock_popen.assert_called_once_with(
+            "sleep 10",
+            shell=True,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+        )
+        self.assertTrue(result[0].status)
+        self.assertEqual(
+            result[0].data, {"id": "local", "command": "sleep 10", "returncode": 0}
+        )
+
+        self.mock_popen.reset_mock()
+        mock_proc.reset_mock()
+        mock_proc.stdout.readline.side_effect = [b"output", b""]
+        result = obj.execute()
+        self.mock_popen.assert_called_once_with(
+            "sleep 10",
+            shell=True,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+        )
+
+        self.assertTrue(result[0].status)
+        self.assertEqual(
+            result[0].data, {"id": "local", "command": "sleep 10", "returncode": 0}
+        )
+
+    def test_execute_quiet(self):
+        """test execute quiet"""
+        obj = tasks.LocalTask("foo", self.data, ["host-a", "host-b"])
+        mock_proc = self.mock_popen.return_value.__enter__()
+        mock_proc.returncode = 0
+        mock_proc.communicate.return_value = (b"output", b"")
+        obj.data["quiet"] = True
+        result = obj.execute()
+        self.mock_popen.assert_called_once_with(
+            "sleep 10",
+            shell=True,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+        )
+
+        self.assertTrue(result[0].status)
+        self.assertEqual(
+            result[0].data,
+            {
+                "id": "local",
+                "command": "sleep 10",
+                "output": b"output",
+                "errors": b"",
+                "returncode": 0,
+            },
+        )
+
+    def test_execute_return_codes(self):
+        """test execute return codes"""
+        obj = tasks.LocalTask("foo", self.data, ["host-a", "host-b"])
+        mock_proc = self.mock_popen.return_value.__enter__()
+        mock_proc.returncode = 2
+        mock_proc.stdout.readline.side_effect = [b"output", StopIteration()]
+        obj.data["returncodes"] = [0, 2]
+        result = obj.execute()
+        self.mock_popen.assert_called_once_with(
+            "sleep 10",
+            shell=True,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+        )
+
+        self.assertTrue(result[0].status)
+        self.assertEqual(
+            result[0].data,
+            {
+                "id": "local",
+                "command": "sleep 10",
+                "returncode": 2,
+            },
+        )
+
+        self.mock_popen.reset_mock()
+        mock_proc.reset_mock()
+        mock_proc.returncode = 5
+        result = obj.execute()
+        self.assertFalse(result[0].status)
+        self.assertEqual(
+            result[0].data,
+            {
+                "id": "local",
+                "command": "sleep 10",
+                "returncode": 5,
+            },
+        )

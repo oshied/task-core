@@ -3,6 +3,7 @@
 import logging
 import os
 import random
+import subprocess
 import time
 
 try:
@@ -338,6 +339,63 @@ class NoopTask(BaseTask):
         )
         LOG.info("%s | Running", self)
         data = {"id": self.task_id, "hosts": self.hosts}
-        # https://ansible-runner.readthedocs.io/en/stable/python_interface.html#the-runner-object
         LOG.info("%s | Completed", self)
         return [TaskResult(True, data)]
+
+
+class LocalTask(BaseTask):
+    """noop task that returns name and hosts in results"""
+
+    @property
+    def command(self):
+        return self.data.get("command")
+
+    @property
+    def quiet(self):
+        return self.data.get("quiet", False)
+
+    @property
+    def returncodes(self):
+        return self.data.get("returncodes", [0])
+
+    def execute(self, *args, **kwargs) -> list:
+        LOG.debug(
+            "%s local execute - args: %s, kwargs: %s, data; %s",
+            self,
+            args,
+            kwargs,
+            self.data,
+        )
+        LOG.info("%s | Running", self)
+        cmd = self.command.strip()
+        data = {
+            "id": self.task_id,
+            "command": cmd,
+        }
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True,
+        ) as proc:
+            if self.quiet:
+                output, errs = proc.communicate()
+                data["output"] = output
+                data["errors"] = errs
+            else:
+                while True:
+                    try:
+                        line = proc.stdout.readline()
+                    except StopIteration:
+                        break
+                    if line == b"":
+                        break
+                    if isinstance(line, bytes):
+                        line = line.decode("utf-8")
+                    LOG.info(line.rstrip())
+                proc.stdout.close()
+                proc.wait()
+            data["returncode"] = proc.returncode
+            result = proc.returncode in self.returncodes
+        LOG.info("%s | Completed", self)
+        return [TaskResult(result, data)]

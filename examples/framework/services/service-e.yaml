@@ -12,13 +12,13 @@ tasks:
 
   - id: run
     action: run
-    driver: service
+    driver: local
     provides:
       - service-e.run
     requires:
       - service-e.init
-    jobs:
-      - echo: "service e run"
+    command: >
+      echo "service e run"
 
   - id: finalize
     action: finalize

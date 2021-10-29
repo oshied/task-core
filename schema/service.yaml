@@ -68,7 +68,7 @@ definitions:
           oneOf:
             - $ref: "#/definitions/task_id"
       driver:
-        cosnt: print
+        const: print
       message:
         type: string
     required:
@@ -176,6 +176,45 @@ definitions:
       - id
       - driver
     type: object
+  returncode:
+    type: integer
+  local_task:
+    type: object
+    properties:
+      id:
+        oneOf:
+          - $ref: "#/definitions/task_id"
+      action:
+        type: string
+      provides:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      requires:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      needed-by:
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/task_id"
+      driver:
+        const: local
+      command:
+        type: string
+      quiet:
+        type: boolean
+      returncodes:
+        type: array
+        oneOf:
+          - $ref: "#/definitions/returncode"
+    required:
+      - id
+      - driver
+      - command
 
 properties:
   id:
@@ -195,3 +234,4 @@ properties:
         - $ref: "#/definitions/print_task"
         - $ref: "#/definitions/directord_task"
         - $ref: "#/definitions/ansible_runner_task"
+        - $ref: "#/definitions/local_task"
