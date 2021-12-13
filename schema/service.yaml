@@ -140,6 +140,8 @@ definitions:
         type: string
       runner_options:
         type: object
+      task_options:
+        type: object
       global_fact_cache:
         type: boolean
     required:
