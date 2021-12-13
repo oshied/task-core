@@ -217,6 +217,10 @@ class AnsibleRunnerTask(BaseTask):
         return self._data.get("runner_options", {})
 
     @property
+    def task_options(self) -> dict:
+        return self._data.get("task_options", {})
+
+    @property
     def global_fact_cache(self) -> bool:
         return self._data.get("global_fact_cache", True)
 
@@ -311,7 +315,10 @@ class AnsibleRunnerTask(BaseTask):
         runner_config.prepare()
         # TODO: the call back needs to be overridden here if you want something
         # other than the default.
-        # runner_config.env["ANSIBLE_STDOUT_CALLBACK"] = "tripleo_dense"
+        if self.task_options and "ANSIBLE_STDOUT_CALLBACK" in self.task_options:
+            runner_config.env["ANSIBLE_STDOUT_CALLBACK"] = self.task_options[
+                "ANSIBLE_STDOUT_CALLBACK"
+            ]
 
         # By default ansible-runner forces a per-execution fact cache but we
         # want to share fact caches between our tasks. This can be disabled
