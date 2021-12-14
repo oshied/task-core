@@ -30,7 +30,7 @@ Example invocation (from folder)
 Example directord execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is an example that uses [https://github.com/cloudnull/directord] to setup
+This is an example that uses [https://github.com/directord/directord] to setup
 an instance of keystone. The below bit of code assumes 4 nodes available
 with a stack user that can been connected to via ssh from the user running
 the bash script.

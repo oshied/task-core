@@ -11,9 +11,11 @@ required:
 type: object
 definitions:
   task_id:
+    title: Task ID label
     type: string
     pattern: "^[a-zA-Z0-9\\.\\-\\_]+$"
   service_task:
+    title: Service Task
     type: object
     properties:
       id:
@@ -45,6 +47,7 @@ definitions:
       - driver
       - jobs
   print_task:
+    title: Print Task
     type: object
     properties:
       id:
@@ -76,6 +79,7 @@ definitions:
       - driver
       - message
   directord_task:
+    title: directord Task
     type: object
     properties:
       id:
@@ -108,6 +112,7 @@ definitions:
       - jobs
     type: object
   ansible_runner_task:
+    title: ansible-runner Task
     type: object
     properties:
       id:
@@ -150,6 +155,7 @@ definitions:
       - playbook
     type: object
   noop_task:
+    title: Noop Task
     type: object
     properties:
       id:
@@ -179,8 +185,10 @@ definitions:
       - driver
     type: object
   returncode:
+    title: Return Code
     type: integer
   local_task:
+    title: Local Task
     type: object
     properties:
       id:

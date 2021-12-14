@@ -8,6 +8,7 @@ required:
 type: object
 definitions:
   role_name:
+    title: Role name
     type: string
     pattern: '^[a-zA-Z0-9][a-zA-Z0-9\_\-\ \.]+$'
 properties:
