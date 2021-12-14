@@ -1,12 +1,12 @@
 %global debug_package %{nil}
-%{?!released_version: %global released_version 0.2.0}
+%{?!released_version: %global released_version 0.2.1}
 
 # ---------------
 # task-core
 # ---------------
 
 Name:           task-core
-Summary:        task-core
+Summary:        Python library for describing and resolving service dependencies
 Version:        %{released_version}
 Release:        1%{?dist}
 
@@ -23,7 +23,7 @@ Recommends:     python3-%{name}
 Recommends:     %{name}-examples
 
 %description
-task-core
+Python library for describing and resolving service dependencies
 
 # ---------------
 # Python package
@@ -73,14 +73,14 @@ rm -rf *.egg-info
 # ---------------
 
 %build
-%{py3_build}
+%py3_build
 
 # ---------------
 #  Install
 # ---------------
 
 %install
-%{py3_install}
+%py3_install
 
 # ---------------
 #  Misc
@@ -88,10 +88,6 @@ rm -rf *.egg-info
 
 %check
 # TODO(mwhahaha): run tests
-
-%post
-
-%preun
 
 # ---------------
 # Files
